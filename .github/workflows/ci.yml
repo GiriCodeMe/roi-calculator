@@ -105,19 +105,13 @@ jobs:
           path: playwright-report/
           if-no-files-found: ignore
 
-      # ── Gate 6 (was 4): Unit Tests ───────────────────────────────────────────
-      - name: Unit Tests
+      # ── Gate 6: Unit Tests + Coverage (≥95% required) ───────────────────────
+      - name: Unit Tests & Coverage
         id: unit-tests
         continue-on-error: true
         run: |
-          npm test 2>&1 | tee /tmp/unit-test-output.txt
+          npm run test:coverage 2>&1 | tee /tmp/unit-test-output.txt
           exit ${PIPESTATUS[0]}
-
-      # ── Gate 5: Code Coverage (≥95% required) ────────────────────────────────
-      - name: Code Coverage
-        id: coverage
-        continue-on-error: true
-        run: npm run test:coverage
 
       - name: Upload Coverage Report
         if: always()
@@ -127,13 +121,13 @@ jobs:
           path: coverage/
           if-no-files-found: ignore
 
-      # ── Gate 6: Code Lint ────────────────────────────────────────────────────
+      # ── Gate 7: Code Lint ────────────────────────────────────────────────────
       - name: Code Lint (ESLint)
         id: lint
         continue-on-error: true
         run: npm run lint
 
-      # ── Gate 7: Library Audit (all severities reported) ──────────────────────
+      # ── Gate 8: Library Audit (all severities reported) ──────────────────────
       - name: Library Audit
         id: lib-audit
         continue-on-error: true
@@ -184,7 +178,6 @@ jobs:
           E2E_COVERAGE:  ${{ steps.e2e-coverage.outcome }}
           A11Y:          ${{ steps.a11y.outcome }}
           TESTS:         ${{ steps.unit-tests.outcome }}
-          COVERAGE:      ${{ steps.coverage.outcome }}
           LINT:          ${{ steps.lint.outcome }}
           LIB_AUDIT:     ${{ steps.lib-audit.outcome }}
           VULN_CHECK:    ${{ steps.vuln-check.outcome }}
@@ -195,7 +188,7 @@ jobs:
           strip_ansi() { sed 's/\x1B\[[0-9;]*[mGKHF]//g' "$1" 2>/dev/null || echo "Output not available"; }
 
           PASS=true
-          for s in "$BUILD" "$PACKAGE" "$E2E" "$E2E_COVERAGE" "$A11Y" "$TESTS" "$COVERAGE" "$LINT" "$LIB_AUDIT" "$VULN_CHECK" "$SONAR_SCAN" "$SONAR_GATE"; do
+          for s in "$BUILD" "$PACKAGE" "$E2E" "$E2E_COVERAGE" "$A11Y" "$TESTS" "$LINT" "$LIB_AUDIT" "$VULN_CHECK" "$SONAR_SCAN" "$SONAR_GATE"; do
             [ "$s" != "success" ] && PASS=false
           done
 
@@ -226,13 +219,12 @@ jobs:
           | 3  | E2E Tests (Playwright) | $(icon $E2E) | All behavioural tests pass |
           | 4  | E2E Coverage | $(icon $E2E_COVERAGE) | > 79% (statements, functions, branches, lines) |
           | 5  | Accessibility — WCAG 2.1 AA | $(icon $A11Y) | 0 axe-core violations |
-          | 6  | Unit Tests | $(icon $TESTS) | 0 test failures |
-          | 7  | Code Coverage | $(icon $COVERAGE) | ≥ 95% (statements, functions, branches, lines) |
-          | 8  | Code Lint | $(icon $LINT) | 0 ESLint errors |
-          | 9  | Library Audit | $(icon $LIB_AUDIT) | All advisories reported |
-          | 10 | Vulnerability Check (npm audit) | $(icon $VULN_CHECK) | No moderate / high / critical vulnerabilities |
-          | 11 | SonarQube Scan | $(icon $SONAR_SCAN) | Analysis uploaded successfully |
-          | 12 | SonarQube Quality Gate | $(icon $SONAR_GATE) | Quality gate must pass |
+          | 6  | Unit Tests & Coverage | $(icon $TESTS) | 0 failures + ≥ 95% (statements, functions, branches, lines) |
+          | 7  | Code Lint | $(icon $LINT) | 0 ESLint errors |
+          | 8  | Library Audit | $(icon $LIB_AUDIT) | All advisories reported |
+          | 9  | Vulnerability Check (npm audit) | $(icon $VULN_CHECK) | No moderate / high / critical vulnerabilities |
+          | 10 | SonarQube Scan | $(icon $SONAR_SCAN) | Analysis uploaded successfully |
+          | 11 | SonarQube Quality Gate | $(icon $SONAR_GATE) | Quality gate must pass |
 
           EOF
 
@@ -295,7 +287,6 @@ jobs:
           E2E_COVERAGE:  ${{ steps.e2e-coverage.outcome }}
           A11Y:          ${{ steps.a11y.outcome }}
           TESTS:         ${{ steps.unit-tests.outcome }}
-          COVERAGE:      ${{ steps.coverage.outcome }}
           LINT:          ${{ steps.lint.outcome }}
           LIB_AUDIT:     ${{ steps.lib-audit.outcome }}
           VULN_CHECK:    ${{ steps.vuln-check.outcome }}
@@ -308,8 +299,7 @@ jobs:
           [ "$E2E"           != "success" ] && FAILED="$FAILED\n  ❌ E2E Tests (Playwright)"
           [ "$E2E_COVERAGE"  != "success" ] && FAILED="$FAILED\n  ❌ E2E Coverage (<79%)"
           [ "$A11Y"          != "success" ] && FAILED="$FAILED\n  ❌ Accessibility — WCAG 2.1 AA"
-          [ "$TESTS"         != "success" ] && FAILED="$FAILED\n  ❌ Unit Tests"
-          [ "$COVERAGE"      != "success" ] && FAILED="$FAILED\n  ❌ Code Coverage (<95%)"
+          [ "$TESTS"         != "success" ] && FAILED="$FAILED\n  ❌ Unit Tests & Coverage (<95%)"
           [ "$LINT"          != "success" ] && FAILED="$FAILED\n  ❌ Code Lint"
           [ "$LIB_AUDIT"     != "success" ] && FAILED="$FAILED\n  ❌ Library Audit"
           [ "$VULN_CHECK"    != "success" ] && FAILED="$FAILED\n  ❌ Vulnerability Check (moderate+ found)"
