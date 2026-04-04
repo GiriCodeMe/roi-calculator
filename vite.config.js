@@ -18,6 +18,8 @@ export default defineConfig({
     setupFiles: './src/test/setup.js',
     globals: true,
     exclude: ['**/node_modules/**', '**/e2e/**'],
+    reporters: ['default', 'json'],
+    outputFile: { json: 'test-results/vitest-results.json' },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'json-summary', 'lcov'],

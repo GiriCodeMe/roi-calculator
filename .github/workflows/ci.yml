@@ -10,6 +10,11 @@ jobs:
   quality-gates:
     name: Build & Quality Gates
     runs-on: ubuntu-latest
+    outputs:
+      build_outcome:      ${{ steps.build.outcome }}
+      lint_outcome:       ${{ steps.lint.outcome }}
+      vuln_outcome:       ${{ steps.vuln-check.outcome }}
+      lighthouse_outcome: ${{ steps.lighthouse.outcome }}
 
     steps:
       # ── Setup ────────────────────────────────────────────────────────────────
@@ -345,3 +350,81 @@ jobs:
           fi
 
           echo "All quality gates passed — Go ✅"
+
+  # ── Publish Metrics to ai-sdlc-dashboard ─────────────────────────────────
+  publish-metrics:
+    name: Publish SDLC Metrics
+    needs: quality-gates
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout roi-calculator
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build
+        run: npm run build
+
+      - name: Run unit tests with JSON reporter
+        run: npm run test:coverage
+        continue-on-error: true
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build with coverage instrumentation
+        run: npm run build:coverage
+
+      - name: Run E2E tests with JSON reporter
+        run: npm run test:e2e:coverage
+        continue-on-error: true
+
+      - name: Generate E2E coverage report
+        run: npm run report:e2e:coverage
+        continue-on-error: true
+
+      - name: Download Lighthouse artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lighthouse-report
+          path: .lighthouseci/
+        continue-on-error: true
+
+      - name: Collect metrics
+        run: node scripts/collect-metrics.js
+        env:
+          GITHUB_TOKEN:    ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_RUN_ID:   ${{ github.run_id }}
+          GATE_BUILD:      ${{ needs.quality-gates.outputs.build_outcome }}
+          GATE_LINT:       ${{ needs.quality-gates.outputs.lint_outcome }}
+          GATE_VULN:       ${{ needs.quality-gates.outputs.vuln_outcome }}
+          GATE_LIGHTHOUSE: ${{ needs.quality-gates.outputs.lighthouse_outcome }}
+
+      - name: Checkout ai-sdlc-dashboard
+        uses: actions/checkout@v4
+        with:
+          repository: GiriCodeMe/ai-sdlc-dashboard
+          token: ${{ secrets.SDLC_DASHBOARD_PAT }}
+          path: dashboard-repo
+
+      - name: Copy metrics to dashboard repo
+        run: cp metrics/roi-calculator.json dashboard-repo/metrics/
+
+      - name: Commit and push metrics
+        working-directory: dashboard-repo
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add metrics/roi-calculator.json
+          git diff --staged --quiet && echo "No metrics change" && exit 0
+          git commit -m "chore: update roi-calculator metrics [skip ci]"
+          git push
