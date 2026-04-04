@@ -244,4 +244,81 @@ test.describe('ROI Calculator — Behavioural', () => {
     ])
     expect(download.suggestedFilename()).toMatch(/^roi-analysis-\d{4}-\d{2}-\d{2}\.pdf$/)
   }, 65000)
+
+  // ── Currency ──────────────────────────────────────────────────────────────
+  test('currency selector is visible in the header', async ({ page }) => {
+    await expect(page.getByRole('combobox', { name: /select currency/i })).toBeVisible()
+  })
+
+  test('switching to EUR updates InputForm labels', async ({ page }) => {
+    await page.getByRole('combobox', { name: /select currency/i }).selectOption('EUR')
+    await expect(page.locator('label').filter({ hasText: /Initial Investment \(€\)/i }).first()).toBeVisible()
+  })
+
+  test('switching to EUR updates Results values to contain €', async ({ page }) => {
+    await page.getByRole('combobox', { name: /select currency/i }).selectOption('EUR')
+    await expect(page.locator('.accent-a .results-grid').getByText(/€/).first()).toBeVisible()
+  })
+
+  test('switching to RUB updates labels to ₽', async ({ page }) => {
+    await page.getByRole('combobox', { name: /select currency/i }).selectOption('RUB')
+    await expect(page.locator('label').filter({ hasText: /₽/ }).first()).toBeVisible()
+  })
+
+  test('currency persists to localStorage after selection', async ({ page }) => {
+    await page.getByRole('combobox', { name: /select currency/i }).selectOption('EUR')
+    const stored = await page.evaluate(() => localStorage.getItem('currency'))
+    expect(stored).toBe('EUR')
+    // reset
+    await page.evaluate(() => localStorage.removeItem('currency'))
+  })
+
+  // ── Save / Load ───────────────────────────────────────────────────────────
+  test('Save and Load buttons are visible in Scenario A form', async ({ page }) => {
+    await expect(page.getByRole('button', { name: 'Save Scenario A inputs' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Load saved Scenario A inputs' })).toBeVisible()
+  })
+
+  test('Load button is disabled initially', async ({ page }) => {
+    await expect(page.getByRole('button', { name: 'Load saved Scenario A inputs' })).toBeDisabled()
+  })
+
+  test('clicking Save enables the Load button', async ({ page }) => {
+    await page.evaluate(() => localStorage.removeItem('roi-saved-Scenario A'))
+    await page.getByRole('button', { name: 'Save Scenario A inputs' }).click()
+    await expect(page.getByRole('button', { name: 'Load saved Scenario A inputs' })).toBeEnabled()
+    await page.evaluate(() => localStorage.removeItem('roi-saved-Scenario A'))
+  })
+
+  test('Load restores previously saved custom values', async ({ page }) => {
+    // Change Scenario A investment, save, change again, then load
+    await page.locator('#\\Scenario\\ A-initialInvestment').fill('55555')
+    await page.getByRole('button', { name: 'Save Scenario A inputs' }).click()
+    await page.locator('#\\Scenario\\ A-initialInvestment').fill('99999')
+    await page.getByRole('button', { name: 'Load saved Scenario A inputs' }).click()
+    await expect(page.locator('#\\Scenario\\ A-initialInvestment')).toHaveValue('55555')
+    await page.evaluate(() => localStorage.removeItem('roi-saved-Scenario A'))
+  })
+
+  test('saves are independent between Scenario A and Scenario B', async ({ page }) => {
+    await page.evaluate(() => {
+      localStorage.removeItem('roi-saved-Scenario A')
+      localStorage.removeItem('roi-saved-Scenario B')
+    })
+    await page.getByRole('button', { name: 'Save Scenario A inputs' }).click()
+    await expect(page.getByRole('button', { name: 'Load saved Scenario B inputs' })).toBeDisabled()
+    await page.evaluate(() => {
+      localStorage.removeItem('roi-saved-Scenario A')
+      localStorage.removeItem('roi-saved-Scenario B')
+    })
+  })
+
+  test('saved scenario persists after page reload', async ({ page }) => {
+    await page.evaluate(() => localStorage.removeItem('roi-saved-Scenario A'))
+    await page.locator('#\\Scenario\\ A-initialInvestment').fill('77777')
+    await page.getByRole('button', { name: 'Save Scenario A inputs' }).click()
+    await page.reload()
+    await expect(page.getByRole('button', { name: 'Load saved Scenario A inputs' })).toBeEnabled()
+    await page.evaluate(() => localStorage.removeItem('roi-saved-Scenario A'))
+  })
 })

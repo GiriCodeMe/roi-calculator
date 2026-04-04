@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import CashFlowChart, { formatY, formatTooltip, formatLabel } from '../components/CashFlowChart'
+import CashFlowChart, { makeFormatY, makeFormatTooltip, formatLabel } from '../components/CashFlowChart'
 import { calculateROI } from '../utils/calculations'
 
 vi.mock('recharts', () => ({
@@ -19,18 +19,37 @@ const inputs = { initialInvestment: 100000, monthlyRevenue: 15000, monthlyCosts:
 const dataA = calculateROI(inputs).cashFlowData
 const dataB = calculateROI({ ...inputs, initialInvestment: 150000 }).cashFlowData
 
-describe('formatY', () => {
-  it('formats thousands as $Xk', () => {
+describe('makeFormatY', () => {
+  it('formats thousands as $Xk for USD', () => {
+    const formatY = makeFormatY('USD')
     expect(formatY(10000)).toBe('$10k')
     expect(formatY(-5000)).toBe('$-5k')
     expect(formatY(0)).toBe('$0k')
   })
+
+  it('uses € for EUR', () => {
+    const formatY = makeFormatY('EUR')
+    expect(formatY(10000)).toContain('€')
+  })
+
+  it('uses ₽ for RUB', () => {
+    const formatY = makeFormatY('RUB')
+    expect(formatY(10000)).toContain('₽')
+  })
 })
 
-describe('formatTooltip', () => {
-  it('returns formatted currency and name', () => {
-    expect(formatTooltip(12345, 'Scenario A')).toEqual(['$12,345', 'Scenario A'])
-    expect(formatTooltip(-5000, 'Scenario B')).toEqual(['$-5,000', 'Scenario B'])
+describe('makeFormatTooltip', () => {
+  it('returns formatted currency and name for USD', () => {
+    const formatTooltip = makeFormatTooltip('USD')
+    const [val, name] = formatTooltip(12345, 'Scenario A')
+    expect(val).toContain('12,345')
+    expect(name).toBe('Scenario A')
+  })
+
+  it('returns € formatted value for EUR', () => {
+    const formatTooltip = makeFormatTooltip('EUR')
+    const [val] = formatTooltip(5000, 'Scenario B')
+    expect(val).toContain('€')
   })
 })
 

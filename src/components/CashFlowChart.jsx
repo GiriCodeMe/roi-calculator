@@ -2,12 +2,13 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ReferenceLine, ResponsiveContainer, Legend,
 } from 'recharts'
+import { getCurrencySymbol, formatCurrency } from '../utils/currency'
 
-export const formatY = (v) => '$' + (v / 1000).toFixed(0) + 'k'
-export const formatTooltip = (v, name) => ['$' + Math.round(v).toLocaleString('en-US'), name]
+export const makeFormatY = (currency) => (v) => getCurrencySymbol(currency) + (v / 1000).toFixed(0) + 'k'
+export const makeFormatTooltip = (currency) => (v, name) => [formatCurrency(v, currency), name]
 export const formatLabel = (l) => `Month ${l}`
 
-function CashFlowChart({ dataA, dataB, validA, validB, darkMode }) {
+function CashFlowChart({ dataA, dataB, validA, validB, darkMode, currency = 'USD' }) {
   if (!validA && !validB) {
     return (
       <div className="card">
@@ -27,6 +28,9 @@ function CashFlowChart({ dataA, dataB, validA, validB, darkMode }) {
     ...(validA ? { 'Scenario A': dataA[i]?.cashFlow ?? null } : {}),
     ...(validB ? { 'Scenario B': dataB[i]?.cashFlow ?? null } : {}),
   }))
+
+  const formatY       = makeFormatY(currency)
+  const formatTooltip = makeFormatTooltip(currency)
 
   const gridColor  = darkMode ? '#1e293b' : '#f0f4f8'
   const axisColor  = darkMode ? '#94a3b8' : '#64748b'
@@ -68,6 +72,10 @@ function CashFlowChart({ dataA, dataB, validA, validB, darkMode }) {
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 5 }}
+              isAnimationActive={true}
+              animationDuration={600}
+              animationEasing="ease-out"
+              animationBegin={0}
             />
           )}
           {validB && (
@@ -78,6 +86,10 @@ function CashFlowChart({ dataA, dataB, validA, validB, darkMode }) {
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 5 }}
+              isAnimationActive={true}
+              animationDuration={600}
+              animationEasing="ease-out"
+              animationBegin={0}
             />
           )}
         </LineChart>

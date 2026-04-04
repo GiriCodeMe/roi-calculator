@@ -46,4 +46,18 @@ describe('App', () => {
     await userEvent.type(investmentInput, '0')
     expect(screen.getByText(/Fix the errors above to see results/i)).toBeInTheDocument()
   })
+
+  it('renders currency select with aria-label', () => {
+    render(<App />)
+    expect(screen.getByRole('combobox', { name: /select currency/i })).toBeInTheDocument()
+  })
+
+  it('currency select has USD, EUR, RUB options', () => {
+    render(<App />)
+    const select = screen.getByRole('combobox', { name: /select currency/i })
+    const options = Array.from(select.options).map(o => o.value)
+    expect(options).toContain('USD')
+    expect(options).toContain('EUR')
+    expect(options).toContain('RUB')
+  })
 })

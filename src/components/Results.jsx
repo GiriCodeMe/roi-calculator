@@ -1,7 +1,8 @@
-const fmt = (n) => '$' + Math.round(n).toLocaleString('en-US')
+import { formatCurrency } from '../utils/currency'
+
 const fmtPct = (n) => n.toFixed(1) + '%'
 
-function Results({ label, results, inputs, colorClass, disabled }) {
+function Results({ label, results, inputs, colorClass, disabled, currency = 'USD' }) {
   if (disabled) {
     return (
       <div className={`card ${colorClass} results-disabled`}>
@@ -37,13 +38,13 @@ function Results({ label, results, inputs, colorClass, disabled }) {
         <div className="result-item">
           <div className="result-label">Total Net Profit</div>
           <div className={`result-value ${totalNetProfit >= 0 ? 'positive' : 'negative'}`}>
-            {fmt(totalNetProfit)}
+            {formatCurrency(totalNetProfit, currency)}
           </div>
         </div>
         <div className="result-item">
           <div className="result-label">Monthly Net Profit</div>
           <div className={`result-value ${monthlyNetProfit >= 0 ? 'positive' : 'negative'}`}>
-            {fmt(monthlyNetProfit)}
+            {formatCurrency(monthlyNetProfit, currency)}
           </div>
         </div>
       </div>

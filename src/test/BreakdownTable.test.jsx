@@ -81,4 +81,18 @@ describe('BreakdownTable', () => {
     // payback is month 10 → row index 10 (index 0 = header)
     expect(rows[10]).toHaveClass('break-even-row')
   })
+
+  it('renders with EUR currency — no crash and contains €', async () => {
+    render(<BreakdownTable label="Scenario A" results={results} inputs={inputs} colorClass="accent-a" currency="EUR" />)
+    await userEvent.click(screen.getByRole('button', { name: /Show Table/i }))
+    const cells = screen.getAllByText(/€/)
+    expect(cells.length).toBeGreaterThan(0)
+  })
+
+  it('renders with USD currency — revenue cell contains $', async () => {
+    render(<BreakdownTable label="Scenario A" results={results} inputs={inputs} colorClass="accent-a" currency="USD" />)
+    await userEvent.click(screen.getByRole('button', { name: /Show Table/i }))
+    const cells = screen.getAllByText(/\$/)
+    expect(cells.length).toBeGreaterThan(0)
+  })
 })

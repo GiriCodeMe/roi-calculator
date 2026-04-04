@@ -12,10 +12,13 @@
 8. **Export to PDF** — "⬇ Export PDF" button in the header. Captures `app-main` via `html2canvas` (scale 1.5) and generates an A4 PDF using `jspdf`. PDF includes "ROI Analysis Report" heading (blue), current date, horizontal rule, then the screenshot. Downloads as `roi-analysis-YYYY-MM-DD.pdf`. Button shows "⏳ Exporting…" while generating. `aria-label="Export PDF"`.
 9. **Dark theme** — "🌙 Dark" / "☀ Light" toggle in the header. All colours defined as CSS custom properties in `:root`; overridden in `[data-theme="dark"]` on `<html>`. Persisted to `localStorage` under key `theme`. Chart axis, grid, tooltip, and reference-line colours switch via `darkMode` prop on `CashFlowChart`. All dark-mode colours meet WCAG 2.1 AA contrast ratios.
 10. **Embeddable widget** — "＜/＞ Embed" button in the header opens a modal dialog. Modal shows a copyable `<iframe>` snippet using `window.location.origin`. "Copy Code" button copies to clipboard; shows "✓ Copied!" feedback for 2 s. Modal closes on overlay click or ✕ button. `role="dialog"` with `aria-modal` and `aria-labelledby`.
+11. **Chart animation** — Both `<Line>` components in `CashFlowChart` use `isAnimationActive={true}`, `animationDuration={600}`, `animationEasing="ease-out"`, `animationBegin={0}` for a smooth draw-on-load effect.
+12. **Multi-currency** — Currency selector (`<select>`) in the header persists choice to `localStorage` under key `currency`. Three options: USD (`$`), EUR (`€`), RUB (`₽`). All monetary values in InputForm labels, Results, BreakdownTable, and chart tooltip/Y-axis update to the selected currency via `src/utils/currency.js` (`CURRENCIES`, `formatCurrency`, `getCurrencySymbol`).
+13. **Save scenarios** — Each InputForm has "💾 Save" and "Load" buttons. Clicking Save stores current inputs as JSON to `localStorage` under key `roi-saved-{label}`. Load is disabled until a save exists; clicking it restores the saved inputs via `onChange`. Both buttons have `aria-label` attributes. Styled with `.scenario-btn` class.
 
 ## Layout
 
-- Header: title + subtitle (left) | action buttons — Dark/Light, Export PDF, Embed (right)
+- Header: title + subtitle (left) | action buttons — Currency selector, Dark/Light, Export PDF, Embed (right)
 - Three stacked sections: inputs row → results row → chart → tables row
 - Each row shows Scenario A (left) and Scenario B (right) side by side
 - Collapses to single column on mobile (≤768px); header wraps to column on mobile
@@ -27,15 +30,16 @@ src/
   App.jsx                      # Root — state, dark mode, embed modal, export PDF, layout
   App.css                      # All styles (CSS custom properties, dark theme overrides)
   components/
-    InputForm.jsx               # Form inputs with validation error display
+    InputForm.jsx               # Form inputs, currency labels, save/load buttons
     Results.jsx                 # Results grid (disabled state when invalid)
-    CashFlowChart.jsx           # Dual-line Recharts chart (darkMode prop)
+    CashFlowChart.jsx           # Dual-line Recharts chart (darkMode, currency props)
     BreakdownTable.jsx          # Monthly table with show/hide toggle
     EmbedModal.jsx              # Embed iframe code modal dialog
   utils/
     calculations.js             # Pure ROI calculation function
     validation.js               # validateInputs(), hasErrors()
     exportPdf.js                # exportToPDF(element) — html2canvas + jspdf
+    currency.js                 # CURRENCIES array, formatCurrency(), getCurrencySymbol()
   test/
     App.test.jsx
     InputForm.test.jsx
@@ -46,8 +50,9 @@ src/
     exportPdf.test.js
     calculations.test.js
     validation.test.js
+    currency.test.js
 e2e/
-  app.spec.js                  # Playwright behavioural test suite (47 tests)
+  app.spec.js                  # Playwright behavioural test suite (60 tests)
   accessibility.spec.js        # WCAG 2.1 AA axe-core tests (8 tests)
   fixtures.js                  # Custom test fixture — auto-saves Istanbul coverage
 playwright.config.js           # Playwright config — Chromium, port 4173, webServer
@@ -62,7 +67,7 @@ playwright.config.js           # Playwright config — Chromium, port 4173, webS
 | # | Check | Command | Pass Condition |
 |---|-------|---------|----------------|
 | 1 | **Unit tests + coverage** | `npm run test:coverage` | All tests pass + ≥95% on all metrics |
-| 2 | **E2E tests** | `npm run build && npm run test:e2e` | All 47 Playwright behavioural tests pass |
+| 2 | **E2E tests** | `npm run build && npm run test:e2e` | All 60 Playwright behavioural tests pass |
 | 3 | **Accessibility** | `npm run test:a11y` | 0 axe-core WCAG 2.1 AA violations |
 | 4 | **Vulnerability scan** | `npm audit` | `found 0 vulnerabilities` |
 | 5 | **Library audit** | `npm audit` | No high or critical severity advisories |
@@ -94,7 +99,7 @@ playwright.config.js           # Playwright config — Chromium, port 4173, webS
 | 1 | Build | Compiles without errors |
 | 2 | Package (npm pack) | `.tgz` artifact produced |
 | 3 | **Lighthouse** | Performance ≥ 80, Accessibility ≥ 90, Best Practices ≥ 80 |
-| 4 | **E2E Tests (Playwright)** | All 47 behavioural tests pass |
+| 4 | **E2E Tests (Playwright)** | All 60 behavioural tests pass |
 | 5 | **E2E Coverage** | > 79% statements / functions / branches / lines |
 | 6 | **Accessibility — WCAG 2.1 AA** | 0 axe-core violations |
 | 7 | Unit Tests & Coverage | 0 failures + ≥ 95% on all metrics |

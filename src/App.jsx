@@ -7,6 +7,7 @@ import EmbedModal from './components/EmbedModal'
 import { calculateROI } from './utils/calculations'
 import { validateInputs, hasErrors } from './utils/validation'
 import { exportToPDF } from './utils/exportPdf'
+import { CURRENCIES } from './utils/currency'
 import './App.css'
 
 const DEFAULT_INPUTS_A = {
@@ -29,6 +30,9 @@ function App() {
   const [darkMode, setDarkMode] = useState(
     () => localStorage.getItem('theme') === 'dark'
   )
+  const [currency, setCurrency] = useState(
+    () => localStorage.getItem('currency') ?? 'USD'
+  )
   const [embedOpen, setEmbedOpen] = useState(false)
   const [exporting, setExporting] = useState(false)
   const exportRef = useRef(null)
@@ -37,6 +41,10 @@ function App() {
     document.documentElement.dataset.theme = darkMode ? 'dark' : ''
     localStorage.setItem('theme', darkMode ? 'dark' : 'light')
   }, [darkMode])
+
+  useEffect(() => {
+    localStorage.setItem('currency', currency)
+  }, [currency])
 
   const errorsA = validateInputs(inputsA)
   const errorsB = validateInputs(inputsB)
@@ -64,6 +72,18 @@ function App() {
           <p>Compare two investment scenarios side by side</p>
         </div>
         <div className="header-actions">
+          <label htmlFor="currency-select" className="sr-only">Select currency</label>
+          <select
+            id="currency-select"
+            className="action-btn"
+            value={currency}
+            onChange={e => setCurrency(e.target.value)}
+            aria-label="Select currency"
+          >
+            {CURRENCIES.map(c => (
+              <option key={c.code} value={c.code}>{c.code}</option>
+            ))}
+          </select>
           <button
             className="action-btn"
             onClick={() => setDarkMode(d => !d)}
@@ -91,12 +111,12 @@ function App() {
 
       <main className="app-main" ref={exportRef}>
         <div className="inputs-row">
-          <InputForm label="Scenario A" inputs={inputsA} onChange={setInputsA} colorClass="accent-a" errors={errorsA} />
-          <InputForm label="Scenario B" inputs={inputsB} onChange={setInputsB} colorClass="accent-b" errors={errorsB} />
+          <InputForm label="Scenario A" inputs={inputsA} onChange={setInputsA} colorClass="accent-a" errors={errorsA} currency={currency} />
+          <InputForm label="Scenario B" inputs={inputsB} onChange={setInputsB} colorClass="accent-b" errors={errorsB} currency={currency} />
         </div>
         <div className="results-row">
-          <Results label="Scenario A" results={resultsA} inputs={inputsA} colorClass="accent-a" disabled={!validA} />
-          <Results label="Scenario B" results={resultsB} inputs={inputsB} colorClass="accent-b" disabled={!validB} />
+          <Results label="Scenario A" results={resultsA} inputs={inputsA} colorClass="accent-a" disabled={!validA} currency={currency} />
+          <Results label="Scenario B" results={resultsB} inputs={inputsB} colorClass="accent-b" disabled={!validB} currency={currency} />
         </div>
         <CashFlowChart
           dataA={resultsA?.cashFlowData ?? []}
@@ -104,10 +124,11 @@ function App() {
           validA={validA}
           validB={validB}
           darkMode={darkMode}
+          currency={currency}
         />
         <div className="tables-row">
-          <BreakdownTable label="Scenario A" results={resultsA} inputs={inputsA} colorClass="accent-a" disabled={!validA} />
-          <BreakdownTable label="Scenario B" results={resultsB} inputs={inputsB} colorClass="accent-b" disabled={!validB} />
+          <BreakdownTable label="Scenario A" results={resultsA} inputs={inputsA} colorClass="accent-a" disabled={!validA} currency={currency} />
+          <BreakdownTable label="Scenario B" results={resultsB} inputs={inputsB} colorClass="accent-b" disabled={!validB} currency={currency} />
         </div>
       </main>
 

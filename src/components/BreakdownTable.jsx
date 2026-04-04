@@ -1,8 +1,7 @@
 import { useState } from 'react'
+import { formatCurrency } from '../utils/currency'
 
-const fmt = (n) => '$' + Math.round(n).toLocaleString('en-US')
-
-function BreakdownTable({ label, results, inputs, colorClass, disabled }) {
+function BreakdownTable({ label, results, inputs, colorClass, disabled, currency = 'USD' }) {
   const [visible, setVisible] = useState(false)
 
   return (
@@ -38,10 +37,10 @@ function BreakdownTable({ label, results, inputs, colorClass, disabled }) {
                 return (
                   <tr key={row.month} className={isBreakEven ? 'break-even-row' : ''}>
                     <td>{row.month}</td>
-                    <td>{fmt(inputs.monthlyRevenue)}</td>
-                    <td>{fmt(inputs.monthlyCosts)}</td>
+                    <td>{formatCurrency(inputs.monthlyRevenue, currency)}</td>
+                    <td>{formatCurrency(inputs.monthlyCosts, currency)}</td>
                     <td className={results.monthlyNetProfit >= 0 ? 'positive' : 'negative'}>
-                      {fmt(results.monthlyNetProfit)}
+                      {formatCurrency(results.monthlyNetProfit, currency)}
                     </td>
                   </tr>
                 )
