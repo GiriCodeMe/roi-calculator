@@ -321,4 +321,29 @@ test.describe('ROI Calculator — Behavioural', () => {
     await expect(page.getByRole('button', { name: 'Load saved Scenario A inputs' })).toBeEnabled()
     await page.evaluate(() => localStorage.removeItem('roi-saved-Scenario A'))
   })
+
+  // ── Layout & Responsiveness ───────────────────────────────────────────────
+  test('inputs stack to single column on mobile viewport (375px)', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 })
+    const flexDir = await page.locator('.inputs-row').evaluate(el => getComputedStyle(el).flexDirection)
+    expect(flexDir).toBe('column')
+  })
+
+  test('results stack to single column on mobile viewport (375px)', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 })
+    const flexDir = await page.locator('.results-row').evaluate(el => getComputedStyle(el).flexDirection)
+    expect(flexDir).toBe('column')
+  })
+
+  test('inputs display two-column layout on desktop viewport (1200px)', async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 800 })
+    const flexDir = await page.locator('.inputs-row').evaluate(el => getComputedStyle(el).flexDirection)
+    expect(flexDir).toBe('row')
+  })
+
+  test('header wraps to column layout on mobile viewport (375px)', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 })
+    const flexDir = await page.locator('.app-header').evaluate(el => getComputedStyle(el).flexDirection)
+    expect(flexDir).toBe('column')
+  })
 })

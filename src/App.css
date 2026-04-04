@@ -356,6 +356,25 @@ select.action-btn {
   color: #fff;
 }
 
+/* Dark mode overrides — light colours needed for contrast on --bg-card #1e293b */
+[data-theme="dark"] .action-btn:hover:not(:disabled) {
+  border-color: #60a5fa;
+  color: #60a5fa; /* blue-400: 6.1:1 on #1e293b ✅ */
+}
+
+[data-theme="dark"] .scenario-btn:hover:not(:disabled) {
+  border-color: #60a5fa;
+  color: #60a5fa; /* blue-400: 6.1:1 on #162032 (--bg-alt) ✅ */
+}
+
+[data-theme="dark"] .toggle-btn.accent-a {
+  color: #60a5fa; /* blue-400: 6.1:1 on #1e293b ✅ */
+}
+
+[data-theme="dark"] .toggle-btn.accent-b {
+  color: #fdba74; /* orange-300: 7.5:1 on #1e293b ✅ */
+}
+
 .toggle-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;

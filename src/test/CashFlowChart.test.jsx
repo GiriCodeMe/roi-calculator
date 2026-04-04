@@ -5,14 +5,22 @@ import { calculateROI } from '../utils/calculations'
 
 vi.mock('recharts', () => ({
   LineChart: ({ children }) => <div data-testid="line-chart">{children}</div>,
-  Line: ({ dataKey }) => <div data-testid={`line-${dataKey}`} />,
+  Line: ({ dataKey, isAnimationActive, animationDuration, animationEasing, animationBegin }) => (
+    <div
+      data-testid={`line-${dataKey}`}
+      data-animation-active={String(isAnimationActive)}
+      data-animation-duration={String(animationDuration)}
+      data-animation-easing={animationEasing}
+      data-animation-begin={String(animationBegin)}
+    />
+  ),
   XAxis: () => null,
   YAxis: () => null,
   CartesianGrid: () => null,
   Tooltip: () => null,
-  ReferenceLine: () => null,
+  ReferenceLine: ({ y }) => <div data-testid="reference-line" data-y={String(y)} />,
   ResponsiveContainer: ({ children }) => <div data-testid="responsive-container">{children}</div>,
-  Legend: () => null,
+  Legend: () => <div data-testid="chart-legend" />,
 }))
 
 const inputs = { initialInvestment: 100000, monthlyRevenue: 15000, monthlyCosts: 5000, period: 12 }
@@ -99,5 +107,39 @@ describe('CashFlowChart', () => {
     const longData  = calculateROI({ ...inputs, period: 12 }).cashFlowData  // 12 months
     render(<CashFlowChart dataA={shortData} dataB={longData} validA validB />)
     expect(screen.getByTestId('responsive-container')).toBeInTheDocument()
+  })
+})
+
+describe('Chart animation props', () => {
+  it('Scenario A line has animation enabled with 600ms ease-out', () => {
+    render(<CashFlowChart dataA={dataA} dataB={dataB} validA validB />)
+    const line = screen.getByTestId('line-Scenario A')
+    expect(line).toHaveAttribute('data-animation-active', 'true')
+    expect(line).toHaveAttribute('data-animation-duration', '600')
+    expect(line).toHaveAttribute('data-animation-easing', 'ease-out')
+    expect(line).toHaveAttribute('data-animation-begin', '0')
+  })
+
+  it('Scenario B line has animation enabled with 600ms ease-out', () => {
+    render(<CashFlowChart dataA={dataA} dataB={dataB} validA validB />)
+    const line = screen.getByTestId('line-Scenario B')
+    expect(line).toHaveAttribute('data-animation-active', 'true')
+    expect(line).toHaveAttribute('data-animation-duration', '600')
+    expect(line).toHaveAttribute('data-animation-easing', 'ease-out')
+    expect(line).toHaveAttribute('data-animation-begin', '0')
+  })
+})
+
+describe('Break-even reference line', () => {
+  it('renders a ReferenceLine at y=0', () => {
+    render(<CashFlowChart dataA={dataA} dataB={dataB} validA validB />)
+    expect(screen.getByTestId('reference-line')).toHaveAttribute('data-y', '0')
+  })
+})
+
+describe('Chart legend', () => {
+  it('renders the chart legend', () => {
+    render(<CashFlowChart dataA={dataA} dataB={dataB} validA validB />)
+    expect(screen.getByTestId('chart-legend')).toBeInTheDocument()
   })
 })

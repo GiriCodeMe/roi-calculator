@@ -1,6 +1,6 @@
 # ROI Calculator — Test Plan
 
-_Version 1.0 | Created: 2026-04-04_
+_Version 1.1 | Created: 2026-04-04 | Updated: 2026-04-04_
 
 ---
 
@@ -103,21 +103,19 @@ This document establishes traceability between every requirement in `REQUIREMENT
 | `exportPdf.test.js` | 6 | ✅ All pass |
 | `InputForm.test.jsx` | 18 | ✅ All pass |
 | `Results.test.jsx` | 11 | ✅ All pass |
-| `CashFlowChart.test.jsx` | 13 | ✅ All pass |
+| `CashFlowChart.test.jsx` | 18 | ✅ All pass |
 | `BreakdownTable.test.jsx` | 12 | ✅ All pass |
 | `EmbedModal.test.jsx` | 11 | ✅ All pass |
-| `App.test.jsx` | 7 | ✅ All pass |
-| **Total** | **115** | ✅ **115/115** |
-
-> **Note:** Total unit tests is 115 (not 120 — prior counts included some test suites that were restructured; exact count as of current run).
+| `App.test.jsx` | 11 | ✅ All pass |
+| **Total** | **124** | ✅ **124/124** |
 
 ### E2E Tests (as of 2026-04-04)
 
 | Test File | Tests | Status |
 |-----------|-------|--------|
-| `app.spec.js` — Behavioural | 50 | ✅ All pass |
-| `accessibility.spec.js` — WCAG 2.1 AA | 8 | ✅ All pass |
-| **Total** | **58** | ✅ **58/58** |
+| `app.spec.js` — Behavioural | 54 | ✅ All pass |
+| `accessibility.spec.js` — WCAG 2.1 AA | 9 | ✅ All pass |
+| **Total** | **63** | ✅ **63/63** |
 
 ---
 
@@ -529,23 +527,28 @@ Each AC block maps to the FR tests above. This section provides a quick pass/fai
 
 ## 8. Coverage Gaps & Risk Register
 
-The following requirements have no automated coverage or only partial coverage. Each is assessed for risk.
+### Resolved Gaps (fixed in gap-fix pass, 2026-04-04)
+
+| ID | Requirement | Resolution |
+|----|-------------|-----------|
+| FR-05.3 | Break-even reference line renders | ✅ Unit test added: `describe('Break-even reference line')` asserts `ReferenceLine` receives `y={0}` |
+| FR-05.4 | Chart legend renders | ✅ Unit test added: `describe('Chart legend')` asserts `data-testid="chart-legend"` present |
+| FR-10.2 | Two-column layout on desktop | ✅ E2E test added: `inputs display two-column layout on desktop viewport (1200px)` |
+| FR-10.3 | Single-column on mobile | ✅ E2E tests added: inputs, results, header all verified at 375px width |
+| FR-10.4 | Header wraps on mobile | ✅ E2E test added: `header wraps to column layout on mobile viewport (375px)` |
+| FR-12.1 | Chart lines animate | ✅ Unit tests added: `describe('Chart animation props')` asserts `isAnimationActive`, `animationDuration` per line |
+| FR-12.2 | Animation 600ms ease-out | ✅ Asserted in same describe block (`animationEasing`, `animationBegin`) |
+| NFR-02.5 | Dark mode WCAG contrast | ✅ E2E test added: `dark mode has no WCAG 2.1 AA violations` in `accessibility.spec.js`; also fixed real contrast failures in `.toggle-btn`, `.action-btn:hover`, `.scenario-btn:hover` |
+
+### Remaining Gaps
 
 | ID | Requirement | Gap | Risk | Mitigation |
 |----|-------------|-----|------|-----------|
-| FR-05.3 | Break-even reference line renders | Recharts `<ReferenceLine>` not asserted in unit mock | Low — component renders without error; line is a static prop | Add a unit test asserting ReferenceLine receives `y={0}` |
-| FR-05.4 | Chart legend renders | `<Legend>` not explicitly asserted | Low — static component prop | Add unit assertion for Legend presence |
 | FR-06.6 | Table rows are striped | Pure CSS `nth-child(even)`; no colour assertion | Low — CSS is deterministic | Manual visual check on each feature PR |
-| FR-10.2 | Two-column layout on desktop | No viewport width test | Low — CSS flexbox well-tested manually | Add Playwright viewport test at 1200px width |
-| FR-10.3 | Single-column on mobile | No mobile viewport test | Medium — mobile regressions can go undetected | Add Playwright `page.setViewportSize({ width: 375 })` test |
-| FR-10.4 | Header wraps on mobile | No mobile viewport test | Low | Same as FR-10.3 |
-| FR-12.1 | Chart lines animate | Recharts mock ignores animation props | Low — animation is purely cosmetic | Add unit test asserting `isAnimationActive`, `animationDuration` props on Line |
-| FR-12.2 | Animation 600ms ease-out | Same as above | Low | Same as FR-12.1 |
-| NFR-02.5 | Dark mode WCAG contrast | axe scan runs in light mode only | Medium — dark mode colours are hardcoded but not machine-verified | Add E2E test that switches to dark mode then runs axe scan |
 | NFR-04.2 | No hardcoded secrets | Code review only | Low — client-side app with no credentials | Add `gitleaks` or `secretlint` to CI |
-| NFR-06.2 | Usable on ≥ 320px | No automated viewport test | Medium | Add Playwright mobile viewport tests |
+| NFR-06.2 | Usable on ≥ 320px | Viewport tests cover 375px (above 320px floor) | Low — 375px is the most constrained device tested | Add a 320px viewport test if regressions appear |
 
-**Total gaps**: 11 requirements with partial or no automated coverage out of 87 total requirement items (87% automated coverage rate).
+**Total gaps**: 3 remaining (down from 11) out of 87 total requirement items — **97% automated coverage rate**.
 
 ---
 
@@ -558,7 +561,7 @@ All CI gates run automatically on every push/PR to `main`. Test plan pass/fail m
 | CI-1 | Build | 0 errors | NFR-05.1 |
 | CI-2 | npm pack | Tarball produced | NFR-05.2 |
 | CI-3 | Lighthouse | Perf ≥80, A11y ≥90, BP ≥80 | NFR-01.1, NFR-02.1, NFR-05.3 |
-| CI-4 | E2E Tests (Playwright) | 58/58 pass | NFR-03.6, all FR/AC E2E items |
+| CI-4 | E2E Tests (Playwright) | 63/63 pass | NFR-03.6, all FR/AC E2E items |
 | CI-5 | E2E Coverage (Istanbul) | > 79% stmts/funcs/branches/lines | NFR-03.7 |
 | CI-6 | Accessibility — WCAG 2.1 AA | 0 axe violations | NFR-02.2, AC-08.1 |
 | CI-7 | Unit Tests & Coverage | 0 failures + ≥95% all metrics | NFR-03.1–03.5 |

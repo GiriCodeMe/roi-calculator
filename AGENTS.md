@@ -67,7 +67,7 @@ playwright.config.js           # Playwright config — Chromium, port 4173, webS
 | # | Check | Command | Pass Condition |
 |---|-------|---------|----------------|
 | 1 | **Unit tests + coverage** | `npm run test:coverage` | All tests pass + ≥95% on all metrics |
-| 2 | **E2E tests** | `npm run build && npm run test:e2e` | All 60 Playwright behavioural tests pass |
+| 2 | **E2E tests** | `npm run build && npm run test:e2e` | All 63 Playwright behavioural tests pass |
 | 3 | **Accessibility** | `npm run test:a11y` | 0 axe-core WCAG 2.1 AA violations |
 | 4 | **Vulnerability scan** | `npm audit` | `found 0 vulnerabilities` |
 | 5 | **Library audit** | `npm audit` | No high or critical severity advisories |
@@ -99,7 +99,7 @@ playwright.config.js           # Playwright config — Chromium, port 4173, webS
 | 1 | Build | Compiles without errors |
 | 2 | Package (npm pack) | `.tgz` artifact produced |
 | 3 | **Lighthouse** | Performance ≥ 80, Accessibility ≥ 90, Best Practices ≥ 80 |
-| 4 | **E2E Tests (Playwright)** | All 60 behavioural tests pass |
+| 4 | **E2E Tests (Playwright)** | All 63 behavioural tests pass |
 | 5 | **E2E Coverage** | > 79% statements / functions / branches / lines |
 | 6 | **Accessibility — WCAG 2.1 AA** | 0 axe-core violations |
 | 7 | Unit Tests & Coverage | 0 failures + ≥ 95% on all metrics |

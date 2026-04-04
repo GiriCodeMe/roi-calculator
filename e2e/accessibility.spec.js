@@ -84,4 +84,15 @@ test.describe('Accessibility — WCAG 2.1 AA', () => {
     })
     expect(unlabelled).toHaveLength(0)
   })
+
+  // ── Dark mode ─────────────────────────────────────────────────────────────
+  test('dark mode has no WCAG 2.1 AA violations', async ({ page }) => {
+    await page.getByRole('button', { name: /Switch to dark theme/i }).click()
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze()
+    expect(results.violations).toEqual([])
+    // reset so other tests are not affected
+    await page.evaluate(() => localStorage.removeItem('theme'))
+  })
 })
