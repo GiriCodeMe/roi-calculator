@@ -24,6 +24,9 @@ Feature requirements are in `AGENTS.md` — read it before implementing anything
 | Production build | `npm run build` |
 | Preview build | `npm run preview` |
 | Install deps | `npm install` |
+| Run tests | `npm test` |
+| Test coverage | `npm run test:coverage` |
+| Vulnerability scan | `npm audit` |
 
 ## Project Structure
 
@@ -38,6 +41,7 @@ src/
 ## Critical Rules
 
 - **Always read `AGENTS.md`** before implementing features — it defines all requirements
+- **Every build must pass all 4 non-functional checks** (tests, coverage, vulnerability scan, npm audit) — see `AGENTS.md` Non-Functional Mandates section
 - **Functional components only** — whenever writing or editing any component, use functional components; no class components
 - **No external UI libraries** (no MUI, Tailwind, Bootstrap) — use inline styles or plain CSS
 - **Recharts is already installed** — use it for all charts, do not add other chart libraries
