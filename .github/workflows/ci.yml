@@ -89,7 +89,23 @@ jobs:
           path: coverage-e2e/
           if-no-files-found: ignore
 
-      # ── Gate 4: Unit Tests ───────────────────────────────────────────────────
+      # ── Gate 5: Accessibility — WCAG 2.1 AA (axe-core) ───────────────────────
+      - name: Accessibility Tests (WCAG 2.1 AA)
+        id: a11y
+        continue-on-error: true
+        run: |
+          npm run test:a11y 2>&1 | tee /tmp/a11y-output.txt
+          exit ${PIPESTATUS[0]}
+
+      - name: Upload Accessibility Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: accessibility-report
+          path: playwright-report/
+          if-no-files-found: ignore
+
+      # ── Gate 6 (was 4): Unit Tests ───────────────────────────────────────────
       - name: Unit Tests
         id: unit-tests
         continue-on-error: true
@@ -166,6 +182,7 @@ jobs:
           PACKAGE:       ${{ steps.package.outcome }}
           E2E:           ${{ steps.e2e-tests.outcome }}
           E2E_COVERAGE:  ${{ steps.e2e-coverage.outcome }}
+          A11Y:          ${{ steps.a11y.outcome }}
           TESTS:         ${{ steps.unit-tests.outcome }}
           COVERAGE:      ${{ steps.coverage.outcome }}
           LINT:          ${{ steps.lint.outcome }}
@@ -178,7 +195,7 @@ jobs:
           strip_ansi() { sed 's/\x1B\[[0-9;]*[mGKHF]//g' "$1" 2>/dev/null || echo "Output not available"; }
 
           PASS=true
-          for s in "$BUILD" "$PACKAGE" "$E2E" "$E2E_COVERAGE" "$TESTS" "$COVERAGE" "$LINT" "$LIB_AUDIT" "$VULN_CHECK" "$SONAR_SCAN" "$SONAR_GATE"; do
+          for s in "$BUILD" "$PACKAGE" "$E2E" "$E2E_COVERAGE" "$A11Y" "$TESTS" "$COVERAGE" "$LINT" "$LIB_AUDIT" "$VULN_CHECK" "$SONAR_SCAN" "$SONAR_GATE"; do
             [ "$s" != "success" ] && PASS=false
           done
 
@@ -195,6 +212,8 @@ jobs:
             | sed 's/^ *//' | sed 's/\x1B\[[0-9;]*[mGKHF]//g' || echo "unavailable")
           E2E_SUMMARY=$(grep -E "[0-9]+ (passed|failed)" /tmp/e2e-output.txt 2>/dev/null | tail -1 \
             | sed 's/^ *//' | sed 's/\x1B\[[0-9;]*[mGKHF]//g' || echo "unavailable")
+          A11Y_SUMMARY=$(grep -E "[0-9]+ (passed|failed)" /tmp/a11y-output.txt 2>/dev/null | tail -1 \
+            | sed 's/^ *//' | sed 's/\x1B\[[0-9;]*[mGKHF]//g' || echo "unavailable")
 
           # ── Main gate table ───────────────────────────────────────────────────
           cat >> "$GITHUB_STEP_SUMMARY" << EOF
@@ -202,17 +221,18 @@ jobs:
 
           | Gate | Check | Status | Threshold |
           |------|-------|--------|-----------|
-          | 1 | Build | $(icon $BUILD) | Must compile without errors |
-          | 2 | Package (npm pack) | $(icon $PACKAGE) | Package created successfully |
-          | 3 | E2E Tests (Playwright) | $(icon $E2E) | All behavioural tests pass |
-          | 4 | E2E Coverage | $(icon $E2E_COVERAGE) | > 79% (statements, functions, branches, lines) |
-          | 5 | Unit Tests | $(icon $TESTS) | 0 test failures |
-          | 6 | Code Coverage | $(icon $COVERAGE) | ≥ 95% (statements, functions, branches, lines) |
-          | 7 | Code Lint | $(icon $LINT) | 0 ESLint errors |
-          | 8 | Library Audit | $(icon $LIB_AUDIT) | All advisories reported |
-          | 9 | Vulnerability Check (npm audit) | $(icon $VULN_CHECK) | No moderate / high / critical vulnerabilities |
-          | 10 | SonarQube Scan | $(icon $SONAR_SCAN) | Analysis uploaded successfully |
-          | 11 | SonarQube Quality Gate | $(icon $SONAR_GATE) | Quality gate must pass |
+          | 1  | Build | $(icon $BUILD) | Must compile without errors |
+          | 2  | Package (npm pack) | $(icon $PACKAGE) | Package created successfully |
+          | 3  | E2E Tests (Playwright) | $(icon $E2E) | All behavioural tests pass |
+          | 4  | E2E Coverage | $(icon $E2E_COVERAGE) | > 79% (statements, functions, branches, lines) |
+          | 5  | Accessibility — WCAG 2.1 AA | $(icon $A11Y) | 0 axe-core violations |
+          | 6  | Unit Tests | $(icon $TESTS) | 0 test failures |
+          | 7  | Code Coverage | $(icon $COVERAGE) | ≥ 95% (statements, functions, branches, lines) |
+          | 8  | Code Lint | $(icon $LINT) | 0 ESLint errors |
+          | 9  | Library Audit | $(icon $LIB_AUDIT) | All advisories reported |
+          | 10 | Vulnerability Check (npm audit) | $(icon $VULN_CHECK) | No moderate / high / critical vulnerabilities |
+          | 11 | SonarQube Scan | $(icon $SONAR_SCAN) | Analysis uploaded successfully |
+          | 12 | SonarQube Quality Gate | $(icon $SONAR_GATE) | Quality gate must pass |
 
           EOF
 
@@ -242,6 +262,19 @@ jobs:
             echo ""
           } >> "$GITHUB_STEP_SUMMARY"
 
+          # ── Collapsible: Accessibility Test Results ───────────────────────────
+          {
+            echo "<details>"
+            echo "<summary>♿ Accessibility Test Results (WCAG 2.1 AA) — ${A11Y_SUMMARY}</summary>"
+            echo ""
+            echo '```'
+            strip_ansi /tmp/a11y-output.txt
+            echo '```'
+            echo ""
+            echo "</details>"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
           # ── Conclusion ────────────────────────────────────────────────────────
           cat >> "$GITHUB_STEP_SUMMARY" << EOF
 
@@ -260,6 +293,7 @@ jobs:
           PACKAGE:       ${{ steps.package.outcome }}
           E2E:           ${{ steps.e2e-tests.outcome }}
           E2E_COVERAGE:  ${{ steps.e2e-coverage.outcome }}
+          A11Y:          ${{ steps.a11y.outcome }}
           TESTS:         ${{ steps.unit-tests.outcome }}
           COVERAGE:      ${{ steps.coverage.outcome }}
           LINT:          ${{ steps.lint.outcome }}
@@ -273,6 +307,7 @@ jobs:
           [ "$PACKAGE"       != "success" ] && FAILED="$FAILED\n  ❌ Package (npm pack)"
           [ "$E2E"           != "success" ] && FAILED="$FAILED\n  ❌ E2E Tests (Playwright)"
           [ "$E2E_COVERAGE"  != "success" ] && FAILED="$FAILED\n  ❌ E2E Coverage (<79%)"
+          [ "$A11Y"          != "success" ] && FAILED="$FAILED\n  ❌ Accessibility — WCAG 2.1 AA"
           [ "$TESTS"         != "success" ] && FAILED="$FAILED\n  ❌ Unit Tests"
           [ "$COVERAGE"      != "success" ] && FAILED="$FAILED\n  ❌ Code Coverage (<95%)"
           [ "$LINT"          != "success" ] && FAILED="$FAILED\n  ❌ Code Lint"
