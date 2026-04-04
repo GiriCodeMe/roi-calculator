@@ -1,6 +1,6 @@
 # ROI Calculator — Requirements Specification
 
-_Version 1.0 | Generated: 2026-04-04_
+_Version 1.1 | Updated: 2026-04-04_
 
 ---
 
@@ -14,6 +14,8 @@ _Version 1.0 | Generated: 2026-04-04_
 6. [Acceptance Criteria](#6-acceptance-criteria)
 7. [Non-Functional Requirements](#7-non-functional-requirements)
 8. [Constraints & Assumptions](#8-constraints--assumptions)
+
+> **v1.1 additions**: Epic 10 (Save Scenarios), Epic 11 (Chart Animation), Epic 12 (Multi-Currency); FR-11, FR-12, FR-13; AC-09, AC-10; updated assumptions for currency and data persistence.
 
 ---
 
@@ -99,7 +101,7 @@ The ROI Calculator is a browser-based single-page application that enables users
 | US-12 | As **Sam**, I want to see the total net profit for the selected period so that I understand the absolute gain or loss. | Must |
 | US-13 | As **Sam**, I want to see the monthly net profit so that I understand the ongoing cash position each month. | Must |
 | US-14 | As **Jordan**, I want positive values shown in green and negative values in red so that the financial health of a scenario is immediately obvious. | Should |
-| US-15 | As **Sam**, I want all monetary values formatted with commas and a dollar sign (e.g. $1,234,567) so that large numbers are easy to read. | Must |
+| US-15 | As **Sam**, I want all monetary values formatted with commas and the selected currency symbol (e.g. $1,234,567 or €1.234.567) so that large numbers are easy to read. | Must |
 
 ### Epic 4 — Cash Flow Visualisation
 
@@ -155,6 +157,29 @@ The ROI Calculator is a browser-based single-page application that enables users
 | US-38 | As **Morgan**, I want all buttons to have descriptive `aria-label` attributes so that icon-only or short-label buttons are understood by assistive technology. | Must |
 | US-39 | As **Morgan**, I want to navigate and operate all features using only the keyboard so that the tool is usable without a mouse. | Must |
 | US-40 | As **Sam**, I want the layout to work on a mobile phone so that I can check scenarios on the go. | Should |
+
+### Epic 10 — Save Scenarios
+
+| ID | Story | Priority |
+|----|-------|----------|
+| US-41 | As **Sam**, I want to save my current inputs for a scenario so that I can restore them after experimenting with different values. | Should |
+| US-42 | As **Sam**, I want a "Load" button that is disabled until I have saved, so that I cannot accidentally load empty data. | Should |
+| US-43 | As **Sam**, I want saves to be independent between Scenario A and Scenario B so that saving one does not affect the other. | Should |
+| US-44 | As **Sam**, I want my saved scenario to persist after a page reload so that I do not lose my work between sessions. | Could |
+
+### Epic 11 — Chart Animation
+
+| ID | Story | Priority |
+|----|-------|----------|
+| US-45 | As **Jordan**, I want the cash flow lines to animate on load so that the chart feels polished and draws attention to the trajectory of each scenario. | Could |
+
+### Epic 12 — Multi-Currency
+
+| ID | Story | Priority |
+|----|-------|----------|
+| US-46 | As **Jordan**, I want to switch the display currency (USD, EUR, RUB) so that I can present scenarios in the currency relevant to my client. | Should |
+| US-47 | As **Jordan**, I want all monetary values — form labels, results, table cells, and chart tooltips — to update when I change the currency so that the display is consistent throughout. | Should |
+| US-48 | As **Sam**, I want my currency preference saved so that it is restored when I return to the page. | Could |
 
 ---
 
@@ -392,10 +417,41 @@ The ROI Calculator is a browser-based single-page application that enables users
 
 | ID | Requirement |
 |----|-------------|
-| FR-10.1 | The page header shall display the title and subtitle on the left and three action buttons (Dark/Light, Export PDF, Embed) on the right. |
+| FR-10.1 | The page header shall display the title and subtitle on the left and four controls (Currency selector, Dark/Light, Export PDF, Embed) on the right. |
 | FR-10.2 | Scenario A and B input panels shall be side by side (two-column) on viewport widths > 768px. |
 | FR-10.3 | On viewport widths ≤ 768px, all sections shall collapse to a single-column stacked layout. |
 | FR-10.4 | The header action buttons shall wrap below the title on mobile viewports. |
+
+### FR-11 Save Scenarios
+
+| ID | Requirement |
+|----|-------------|
+| FR-11.1 | Each InputForm panel shall include a "💾 Save" button and a "Load" button. |
+| FR-11.2 | Clicking "Save" shall serialise the current inputs to JSON and write them to `localStorage` under the key `roi-saved-{label}` (e.g. `roi-saved-Scenario A`). |
+| FR-11.3 | The "Load" button shall be disabled on initial render if no saved data exists in `localStorage` for that scenario. |
+| FR-11.4 | Clicking "Save" shall enable the "Load" button for that scenario. |
+| FR-11.5 | Clicking "Load" shall restore the saved inputs via the `onChange` handler; the form shall update immediately. |
+| FR-11.6 | Saves shall be independent per scenario — saving Scenario A shall not affect Scenario B's save state. |
+| FR-11.7 | Saved inputs shall persist across page reloads via `localStorage`. |
+| FR-11.8 | Both buttons shall have descriptive `aria-label` attributes (e.g. `"Save Scenario A inputs"`, `"Load saved Scenario A inputs"`). |
+
+### FR-12 Chart Animation
+
+| ID | Requirement |
+|----|-------------|
+| FR-12.1 | Both `<Line>` components in the cash flow chart shall animate on first render using Recharts' built-in animation props. |
+| FR-12.2 | Animation duration shall be 600 ms with `ease-out` easing and no initial delay (`animationBegin={0}`). |
+
+### FR-13 Multi-Currency
+
+| ID | Requirement |
+|----|-------------|
+| FR-13.1 | A currency `<select>` control shall be present in the page header, offering USD (`$`), EUR (`€`), and RUB (`₽`). |
+| FR-13.2 | The selected currency shall be persisted to `localStorage` under the key `currency` and restored on page load. |
+| FR-13.3 | All monetary display values — InputForm field labels, Results panel, Breakdown Table cells, and chart Y-axis/tooltip — shall update to reflect the selected currency without a page reload. |
+| FR-13.4 | Currency formatting shall use `Intl.NumberFormat` with the locale and currency code matching the selection (e.g. `de-DE` / `EUR` for Euro). |
+| FR-13.5 | The currency selector shall have an associated `<label>` element (may be visually hidden via `.sr-only`) for accessibility. |
+| FR-13.6 | Currency formatting shall be implemented in `src/utils/currency.js` as pure, independently testable functions. |
 
 ---
 
@@ -427,8 +483,8 @@ The ROI Calculator is a browser-based single-page application that enables users
 |-----------|-----------|-------------------|
 | AC-03.1 | Both scenarios valid | Two coloured lines render: blue (A) and orange (B) |
 | AC-03.2 | Break-even reference | A dashed horizontal line at Y=0 labelled "Break-even" is present |
-| AC-03.3 | Tooltip on hover | Shows "Month N" label and "$X,XXX" for each scenario |
-| AC-03.4 | Y-axis ticks | Formatted as "$Xk" (e.g. $10k, $-5k) |
+| AC-03.3 | Tooltip on hover | Shows "Month N" label and a currency-formatted value (e.g. $X,XXX or €X.XXX) for each scenario |
+| AC-03.4 | Y-axis ticks | Formatted as "{symbol}Xk" using the selected currency symbol (e.g. $10k, €10k, ₽10k) |
 | AC-03.5 | Scenarios with different periods | The chart X-axis extends to the longer period; shorter scenario data stops at its last month |
 
 ### AC-04 Breakdown Table
@@ -484,6 +540,26 @@ The ROI Calculator is a browser-based single-page application that enables users
 | AC-08.4 | Embed modal | Has `role="dialog"`, `aria-modal="true"`, `aria-labelledby="embed-title"` |
 | AC-08.5 | Error messages | Adjacent to the invalid field and readable in DOM order |
 
+### AC-09 Save Scenarios
+
+| Criterion | Condition | Expected Behaviour |
+|-----------|-----------|-------------------|
+| AC-09.1 | Page load, no prior save | "Load" button is disabled; "Save" button is enabled |
+| AC-09.2 | "Save" clicked | Inputs are written to `localStorage`; "Load" button becomes enabled |
+| AC-09.3 | "Load" clicked after saving | Form fields are restored to the previously saved values |
+| AC-09.4 | Scenario A saved, Scenario B not saved | Scenario B "Load" button remains disabled |
+| AC-09.5 | Page reloaded after saving | "Load" button is enabled; clicking it restores the saved values |
+
+### AC-10 Multi-Currency
+
+| Criterion | Condition | Expected Behaviour |
+|-----------|-----------|-------------------|
+| AC-10.1 | Currency changed to EUR | InputForm labels show `(€)`, Results values contain `€`, table cells contain `€` |
+| AC-10.2 | Currency changed to RUB | All monetary displays update to `₽` |
+| AC-10.3 | Currency changed to USD | All monetary displays use `$` |
+| AC-10.4 | Currency persisted | Reloading the page restores the last selected currency from `localStorage` |
+| AC-10.5 | Currency selector | Has an associated label; present in the header; `aria-label="Select currency"` |
+
 ---
 
 ## 7. Non-Functional Requirements
@@ -515,7 +591,7 @@ The ROI Calculator is a browser-based single-page application that enables users
 | NFR-03.3 | Unit test coverage — functions | ≥ 95% | Vitest / V8 coverage |
 | NFR-03.4 | Unit test coverage — branches | ≥ 95% | Vitest / V8 coverage |
 | NFR-03.5 | Unit test coverage — lines | ≥ 95% | Vitest / V8 coverage |
-| NFR-03.6 | E2E behavioural test pass rate | 100% (0 failures) | Playwright (`npm run test:e2e`) |
+| NFR-03.6 | E2E behavioural test pass rate (58 tests) | 100% (0 failures) | Playwright (`npm run test:e2e`) |
 | NFR-03.7 | E2E coverage — statements / functions / branches / lines | > 79% | nyc + Istanbul (`npm run check:e2e:coverage`) |
 | NFR-03.8 | ESLint errors | 0 | ESLint (`npm run lint`) |
 
@@ -574,10 +650,10 @@ The ROI Calculator is a browser-based single-page application that enables users
 
 | Assumption | Detail |
 |------------|--------|
-| Single-currency | All monetary values are USD; no currency conversion is required |
+| Multi-currency | Three display currencies are supported: USD ($), EUR (€), RUB (₽). No conversion rates are applied — the same numeric values are reformatted using `Intl.NumberFormat`. Currency preference is persisted to `localStorage`. |
 | Linear revenue model | Monthly Revenue and Monthly Costs are constant throughout the period — no growth curves, seasonality, or variable costs |
 | Cumulative cash flow only | The chart shows cumulative (running total) cash flow, not monthly delta |
-| No data persistence | Scenarios are not saved between sessions; the application resets to defaults on each page load |
+| Partial data persistence | Theme and currency preferences are always persisted to `localStorage`. Each scenario's inputs can optionally be saved via the "💾 Save" button and restored via "Load"; unsaved scenarios reset to defaults on page load. |
 | No user accounts | There is no authentication, login, or user profile system |
 | Client-side only | The embed snippet points to the hosted URL; there is no server-side component to proxy or protect |
 | SonarQube optional | Gates 11 and 12 (SonarQube) are disabled until `SONAR_TOKEN` and `SONAR_HOST_URL` secrets are configured in GitHub |
