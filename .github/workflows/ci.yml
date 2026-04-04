@@ -143,11 +143,11 @@ jobs:
         continue-on-error: true
         run: npm run lint
 
-      # ── Gate 9: Library Audit (all severities reported) ──────────────────────
+      # ── Gate 9: Library Audit (all severities reported — informational only) ──
       - name: Library Audit
         id: lib-audit
         continue-on-error: true
-        run: npm audit
+        run: npm audit || true   # exits 0 always; Gate 10 enforces moderate+
 
       # ── Gate 10: npm audit Vulnerability Check (moderate+ = fail) ───────────
       - name: Vulnerability Check — npm audit (fail on >low)
