@@ -1,6 +1,8 @@
 node_modules
 dist
 coverage
+coverage-e2e
+.nyc_output
 playwright-report
 test-results
 .claude

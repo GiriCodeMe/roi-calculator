@@ -1,8 +1,18 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import istanbul from 'vite-plugin-istanbul'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    istanbul({
+      include: ['src/components/**', 'src/utils/**'],
+      exclude: ['node_modules', 'src/test/**'],
+      extension: ['.js', '.jsx'],
+      requireEnv: true,           // only instruments when VITE_COVERAGE=true
+      forceBuildInstrument: true, // instrument production builds too
+    }),
+  ],
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.js',

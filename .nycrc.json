@@ -1,0 +1,8 @@
+{
+  "reporter": ["text", "html", "lcov"],
+  "include": ["src/components/**", "src/utils/**"],
+  "exclude": ["src/test/**"],
+  "extension": [".js", ".jsx"],
+  "report-dir": "coverage-e2e",
+  "temp-dir": ".nyc_output"
+}
