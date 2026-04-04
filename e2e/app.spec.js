@@ -154,4 +154,94 @@ test.describe('ROI Calculator — Behavioural', () => {
     const breakEvenRow = page.locator('.breakdown-table tbody tr.break-even-row')
     await expect(breakEvenRow).toHaveCount(1)
   })
+
+  // ── Dark theme ────────────────────────────────────────────────────────────
+  test('dark theme toggle button is visible in the header', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /dark/i })).toBeVisible()
+  })
+
+  test('clicking dark theme toggle sets data-theme="dark" on html element', async ({ page }) => {
+    await page.getByRole('button', { name: /dark/i }).click()
+    const theme = await page.evaluate(() => document.documentElement.dataset.theme)
+    expect(theme).toBe('dark')
+  })
+
+  test('dark theme toggle label changes to Light after switching', async ({ page }) => {
+    await page.getByRole('button', { name: /dark/i }).click()
+    await expect(page.getByRole('button', { name: /light/i })).toBeVisible()
+  })
+
+  test('clicking light theme toggle switches back to light mode', async ({ page }) => {
+    await page.getByRole('button', { name: /dark/i }).click()
+    await page.getByRole('button', { name: /light/i }).click()
+    const theme = await page.evaluate(() => document.documentElement.dataset.theme)
+    expect(theme).toBe('')
+  })
+
+  test('dark mode persists after page reload via localStorage', async ({ page }) => {
+    await page.getByRole('button', { name: /dark/i }).click()
+    await page.reload()
+    const theme = await page.evaluate(() => document.documentElement.dataset.theme)
+    expect(theme).toBe('dark')
+    // reset localStorage so other tests are not affected
+    await page.evaluate(() => localStorage.removeItem('theme'))
+  })
+
+  // ── Embed widget ──────────────────────────────────────────────────────────
+  test('Embed button is visible in the header', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /embed/i })).toBeVisible()
+  })
+
+  test('clicking Embed button opens the modal dialog', async ({ page }) => {
+    await page.getByRole('button', { name: /embed/i }).click()
+    await expect(page.getByRole('dialog')).toBeVisible()
+    await expect(page.getByRole('heading', { name: /embed calculator/i })).toBeVisible()
+  })
+
+  test('embed modal shows an iframe code snippet', async ({ page }) => {
+    await page.getByRole('button', { name: /embed/i }).click()
+    const code = await page.locator('.embed-code').inputValue()
+    expect(code).toContain('<iframe')
+    expect(code).toContain('ROI Calculator')
+    expect(code).toContain('</iframe>')
+  })
+
+  test('embed modal code contains the current page origin', async ({ page }) => {
+    await page.getByRole('button', { name: /embed/i }).click()
+    const origin = new URL(page.url()).origin
+    const code = await page.locator('.embed-code').inputValue()
+    expect(code).toContain(origin)
+  })
+
+  test('embed modal closes when the ✕ button is clicked', async ({ page }) => {
+    await page.getByRole('button', { name: /embed/i }).click()
+    await page.getByRole('button', { name: /close/i }).click()
+    await expect(page.getByRole('dialog')).not.toBeVisible()
+  })
+
+  test('embed modal closes when the overlay is clicked', async ({ page }) => {
+    await page.getByRole('button', { name: /embed/i }).click()
+    // click the overlay area (top-left corner, outside the modal box)
+    await page.locator('.modal-overlay').click({ position: { x: 10, y: 10 } })
+    await expect(page.getByRole('dialog')).not.toBeVisible()
+  })
+
+  test('Copy Code button shows Copied! feedback', async ({ page }) => {
+    await page.getByRole('button', { name: /embed/i }).click()
+    await page.getByRole('button', { name: /copy code/i }).click()
+    await expect(page.getByRole('button', { name: /copied/i })).toBeVisible()
+  })
+
+  // ── Export PDF ────────────────────────────────────────────────────────────
+  test('Export PDF button is visible in the header', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /export pdf/i })).toBeVisible()
+  })
+
+  test('clicking Export PDF triggers a file download with correct filename', async ({ page }) => {
+    const [download] = await Promise.all([
+      page.waitForEvent('download', { timeout: 60000 }),
+      page.getByRole('button', { name: /export pdf/i }).click(),
+    ])
+    expect(download.suggestedFilename()).toMatch(/^roi-analysis-\d{4}-\d{2}-\d{2}\.pdf$/)
+  }, 65000)
 })
