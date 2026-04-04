@@ -30,7 +30,7 @@ body {
 }
 
 .app-header p {
-  color: #64748b;
+  color: #475569; /* #64748b fails 4.5:1 on #f1f5f9 bg; #475569 = 6.98:1 ✅ */
   font-size: 0.95rem;
 }
 
@@ -142,7 +142,7 @@ body {
 .result-label {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #94a3b8;
+  color: #475569; /* #94a3b8 fails 4.5:1 on #f8fafc bg; #475569 = 7.16:1 ✅ */
   text-transform: uppercase;
   letter-spacing: 0.07em;
   margin-bottom: 0.4rem;
@@ -155,7 +155,7 @@ body {
 }
 
 .result-value.positive {
-  color: #16a34a;
+  color: #15803d; /* #16a34a fails 4.5:1 on #f8fafc bg; #15803d = 4.74:1 ✅ */
 }
 
 .result-value.negative {
@@ -207,7 +207,7 @@ body {
 }
 
 .toggle-btn.accent-b {
-  color: #ea580c;
+  color: #c2410c; /* #ea580c fails 4.5:1 on white; #c2410c = 5.17:1 ✅ */
 }
 
 .toggle-btn.accent-b:hover:not(:disabled) {
@@ -261,7 +261,7 @@ body {
 }
 
 .breakdown-table td.positive {
-  color: #16a34a;
+  color: #15803d; /* #16a34a fails 4.5:1 on #f8fafc bg; #15803d = 4.74:1 ✅ */
 }
 
 .breakdown-table td.negative {
@@ -285,11 +285,11 @@ body {
 }
 
 .results-disabled {
-  opacity: 0.5;
+  background: #f1f5f9; /* opacity:0.5 dilutes text contrast below 4.5:1 — use bg tint instead */
 }
 
 .disabled-msg {
-  color: #94a3b8;
+  color: #475569; /* #94a3b8 fails contrast; #475569 passes ✅ */
   font-size: 0.9rem;
   padding: 1rem 0;
   text-align: center;
