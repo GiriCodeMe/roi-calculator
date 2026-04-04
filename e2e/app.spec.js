@@ -64,6 +64,16 @@ test.describe('ROI Calculator — Behavioural', () => {
     await expect(page.getByText('Must be greater than $0').first()).toBeVisible()
   })
 
+  test('setting monthly revenue to 0 shows validation error', async ({ page }) => {
+    await page.locator('#\\Scenario\\ A-monthlyRevenue').fill('0')
+    await expect(page.getByText('Must be greater than $0').first()).toBeVisible()
+  })
+
+  test('setting monthly costs to 0 shows validation error', async ({ page }) => {
+    await page.locator('#\\Scenario\\ A-monthlyCosts').fill('0')
+    await expect(page.getByText('Must be greater than $0').first()).toBeVisible()
+  })
+
   test('results are hidden when Scenario A inputs are invalid', async ({ page }) => {
     await page.locator('#\\Scenario\\ A-initialInvestment').fill('0')
     await expect(page.getByText('Fix the errors above to see results').first()).toBeVisible()
@@ -74,6 +84,31 @@ test.describe('ROI Calculator — Behavioural', () => {
     await expect(page.getByText('Scenario B — Results')).toBeVisible()
     // Scenario B ROI should still show
     await expect(page.locator('.accent-b .results-grid')).toBeVisible()
+  })
+
+  test('both scenarios invalid shows chart disabled message', async ({ page }) => {
+    await page.locator('#\\Scenario\\ A-initialInvestment').fill('0')
+    await page.locator('#\\Scenario\\ B-initialInvestment').fill('0')
+    await expect(page.getByText('Fix the errors above to see the chart')).toBeVisible()
+  })
+
+  // ── Results edge cases ────────────────────────────────────────────────────
+  test('payback shown as Never when costs exceed revenue', async ({ page }) => {
+    // monthlyNetProfit = 4000 - 5000 = -1000 → paybackPeriod = null
+    await page.locator('#\\Scenario\\ A-monthlyRevenue').fill('4000')
+    await expect(page.locator('.accent-a').getByText('Never')).toBeVisible()
+  })
+
+  test('payback shown as beyond period when payback exceeds selected period', async ({ page }) => {
+    // monthlyNetProfit = 5001 - 5000 = 1 → payback = 100000 months >> 12
+    await page.locator('#\\Scenario\\ A-monthlyRevenue').fill('5001')
+    await expect(page.locator('.accent-a').getByText(/beyond period/)).toBeVisible()
+  })
+
+  test('negative ROI shown when investment exceeds total profit', async ({ page }) => {
+    // 10000 * 12 - 200000 = -80000 → ROI = -40%
+    await page.locator('#\\Scenario\\ A-initialInvestment').fill('200000')
+    await expect(page.locator('.accent-a .result-value.negative').first()).toBeVisible()
   })
 
   // ── Breakdown table ───────────────────────────────────────────────────────

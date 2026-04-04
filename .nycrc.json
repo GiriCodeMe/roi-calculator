@@ -4,5 +4,9 @@
   "exclude": ["src/test/**"],
   "extension": [".js", ".jsx"],
   "report-dir": "coverage-e2e",
-  "temp-dir": ".nyc_output"
+  "temp-dir": ".nyc_output",
+  "branches": 79,
+  "lines": 79,
+  "functions": 79,
+  "statements": 79
 }
