@@ -52,6 +52,32 @@ src/
 - Keep calculation logic in a pure function (no side effects), separate from render logic
 - Props over state when data flows one direction
 
+## Examples
+
+**Adding a new component**
+```
+✅ DO:  Create src/components/InputForm.jsx — one component, PascalCase filename
+❌ DON'T: Add multiple components to App.jsx or use lowercase filenames
+```
+
+**Displaying a currency value**
+```
+✅ DO:  {value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+❌ DON'T: {value} or {`$${value}`}  ← raw numbers in UI
+```
+
+**Calculation logic**
+```
+✅ DO:  const results = calculateROI(inputs)  ← pure function in utils/calculations.js
+❌ DON'T: Compute ROI inline inside a component or inside a useEffect
+```
+
+**Adding a chart**
+```
+✅ DO:  Use <LineChart> from recharts (already installed)
+❌ DON'T: npm install chart.js or any other chart library
+```
+
 ## Key Feature Checklist (from AGENTS.md)
 
 - [ ] Input form: Initial Investment, Monthly Revenue, Monthly Costs, Period (12/24/36 mo)
