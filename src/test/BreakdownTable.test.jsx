@@ -59,6 +59,15 @@ describe('BreakdownTable', () => {
     expect(screen.getByText('Net Profit')).toBeInTheDocument()
   })
 
+  it('highlights month 1 as break-even when investment recovered immediately', async () => {
+    // monthlyNet (190000) > investment (100000) so month 1 cashFlow >= 0
+    const quickResults = calculateROI({ initialInvestment: 100000, monthlyRevenue: 200000, monthlyCosts: 10000, period: 12 })
+    render(<BreakdownTable label="Scenario A" results={quickResults} inputs={{ ...inputs }} colorClass="accent-a" />)
+    await userEvent.click(screen.getByRole('button', { name: /Show Table/i }))
+    const rows = screen.getAllByRole('row')
+    expect(rows[1]).toHaveClass('break-even-row') // month 1 row
+  })
+
   it('renders disabled state when disabled prop is set', () => {
     render(<BreakdownTable label="Scenario A" results={null} inputs={inputs} colorClass="accent-a" disabled />)
     expect(screen.getByRole('button')).toBeDisabled()

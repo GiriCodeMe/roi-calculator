@@ -7,5 +7,17 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.js',
     globals: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html', 'json-summary', 'lcov'],
+      include: ['src/components/**/*.{js,jsx}', 'src/utils/**/*.{js,jsx}'],
+      exclude: ['src/test/**'],
+      thresholds: {
+        lines: 95,
+        functions: 95,
+        branches: 95,
+        statements: 95,
+      },
+    },
   },
 })

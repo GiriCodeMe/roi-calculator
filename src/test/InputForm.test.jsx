@@ -54,6 +54,22 @@ describe('InputForm', () => {
     expect(screen.getAllByText('Must be greater than $0')).toHaveLength(2)
   })
 
+  it('shows error message for monthlyCosts when error is passed', () => {
+    const errors = { monthlyCosts: 'Must be greater than $0' }
+    render(<InputForm label="Scenario A" inputs={defaultInputs} onChange={() => {}} colorClass="accent-a" errors={errors} />)
+    expect(screen.getByText('Must be greater than $0')).toBeInTheDocument()
+  })
+
+  it('defaults to 0 when a non-numeric value is entered (triggers || 0 fallback)', async () => {
+    const onChange = vi.fn()
+    render(<InputForm label="Scenario A" inputs={defaultInputs} onChange={onChange} colorClass="accent-a" />)
+    const input = screen.getByLabelText(/Initial Investment/i)
+    await userEvent.clear(input)
+    await userEvent.type(input, 'abc')
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0]
+    expect(lastCall(defaultInputs).initialInvestment).toBe(0)
+  })
+
   it('period dropdown has 12, 24, 36 month options', () => {
     render(<InputForm label="Scenario A" inputs={defaultInputs} onChange={() => {}} colorClass="accent-a" />)
     const select = screen.getByLabelText(/Calculation Period/i)

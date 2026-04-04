@@ -39,6 +39,20 @@ describe('Results', () => {
     expect(screen.getByText(/beyond period/i)).toBeInTheDocument()
   })
 
+  it('shows negative class on total net profit when loss', () => {
+    const loss = calculateROI({ ...inputs, period: 6 })
+    const { container } = render(<Results label="Scenario A" results={loss} inputs={{ ...inputs, period: 6 }} colorClass="accent-a" />)
+    const values = container.querySelectorAll('.result-value.negative')
+    expect(values.length).toBeGreaterThan(0)
+  })
+
+  it('shows negative class on monthly net profit when costs exceed revenue', () => {
+    const negMonthly = calculateROI({ ...inputs, monthlyCosts: 20000 })
+    const { container } = render(<Results label="Scenario A" results={negMonthly} inputs={inputs} colorClass="accent-a" />)
+    const negValues = container.querySelectorAll('.result-value.negative')
+    expect(negValues.length).toBeGreaterThan(0)
+  })
+
   it('renders disabled state with message instead of results', () => {
     render(<Results label="Scenario A" results={null} inputs={inputs} colorClass="accent-a" disabled />)
     expect(screen.getByText(/Fix the errors above/i)).toBeInTheDocument()

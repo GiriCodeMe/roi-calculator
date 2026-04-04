@@ -3,12 +3,9 @@ import {
   Tooltip, ReferenceLine, ResponsiveContainer, Legend,
 } from 'recharts'
 
-const formatY = (v) => '$' + (v / 1000).toFixed(0) + 'k'
-
-const formatTooltip = (v, name) => [
-  '$' + Math.round(v).toLocaleString('en-US'),
-  name,
-]
+export const formatY = (v) => '$' + (v / 1000).toFixed(0) + 'k'
+export const formatTooltip = (v, name) => ['$' + Math.round(v).toLocaleString('en-US'), name]
+export const formatLabel = (l) => `Month ${l}`
 
 function CashFlowChart({ dataA, dataB, validA, validB }) {
   if (!validA && !validB) {
@@ -42,7 +39,7 @@ function CashFlowChart({ dataA, dataB, validA, validB }) {
             label={{ value: 'Month', position: 'insideBottom', offset: -12 }}
           />
           <YAxis tickFormatter={formatY} width={56} />
-          <Tooltip formatter={formatTooltip} labelFormatter={(l) => `Month ${l}`} />
+          <Tooltip formatter={formatTooltip} labelFormatter={formatLabel} />
           <Legend verticalAlign="top" height={32} />
           <ReferenceLine
             y={0}
