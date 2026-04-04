@@ -38,7 +38,7 @@ src/
 ## Critical Rules
 
 - **Always read `AGENTS.md`** before implementing features — it defines all requirements
-- **Functional components only** — no class components
+- **Functional components only** — whenever writing or editing any component, use functional components; no class components
 - **No external UI libraries** (no MUI, Tailwind, Bootstrap) — use inline styles or plain CSS
 - **Recharts is already installed** — use it for all charts, do not add other chart libraries
 - **Mobile-first layout**: two-column on desktop, single-column on mobile (use CSS media queries or flexbox wrap)
@@ -77,6 +77,10 @@ src/
 ✅ DO:  Use <LineChart> from recharts (already installed)
 ❌ DON'T: npm install chart.js or any other chart library
 ```
+
+## Guides
+
+@guides/recharts-patterns.md
 
 ## Key Feature Checklist (from AGENTS.md)
 
