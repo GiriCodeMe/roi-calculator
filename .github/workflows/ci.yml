@@ -57,7 +57,9 @@ jobs:
       - name: E2E Tests (Playwright)
         id: e2e-tests
         continue-on-error: true
-        run: npm run test:e2e
+        run: |
+          npm run test:e2e 2>&1 | tee /tmp/e2e-output.txt
+          exit ${PIPESTATUS[0]}
 
       - name: Upload Playwright Report
         if: always()
@@ -71,7 +73,9 @@ jobs:
       - name: Unit Tests
         id: unit-tests
         continue-on-error: true
-        run: npm test
+        run: |
+          npm test 2>&1 | tee /tmp/unit-test-output.txt
+          exit ${PIPESTATUS[0]}
 
       # ── Gate 5: Code Coverage (≥95% required) ────────────────────────────────
       - name: Code Coverage
@@ -149,7 +153,8 @@ jobs:
           SONAR_SCAN:  ${{ steps.sonar-scan.outcome }}
           SONAR_GATE:  ${{ steps.sonar-gate.outcome }}
         run: |
-          icon() { [ "$1" = "success" ] && echo "✅ Pass" || echo "❌ Fail"; }
+          icon()      { [ "$1" = "success" ] && echo "✅ Pass" || echo "❌ Fail"; }
+          strip_ansi() { sed 's/\x1B\[[0-9;]*[mGKHF]//g' "$1" 2>/dev/null || echo "Output not available"; }
 
           PASS=true
           for s in "$BUILD" "$PACKAGE" "$E2E" "$TESTS" "$COVERAGE" "$LINT" "$LIB_AUDIT" "$VULN_CHECK" "$SONAR_SCAN" "$SONAR_GATE"; do
@@ -164,6 +169,13 @@ jobs:
             CONCLUSION_TEXT="One or more quality gates failed. Do not deploy."
           fi
 
+          # Extract one-line summaries for collapsible headers
+          UNIT_SUMMARY=$(grep -E "^ *Tests " /tmp/unit-test-output.txt 2>/dev/null | tail -1 \
+            | sed 's/^ *//' | sed 's/\x1B\[[0-9;]*[mGKHF]//g' || echo "unavailable")
+          E2E_SUMMARY=$(grep -E "[0-9]+ (passed|failed)" /tmp/e2e-output.txt 2>/dev/null | tail -1 \
+            | sed 's/^ *//' | sed 's/\x1B\[[0-9;]*[mGKHF]//g' || echo "unavailable")
+
+          # ── Main gate table ───────────────────────────────────────────────────
           cat >> "$GITHUB_STEP_SUMMARY" << EOF
           # 📊 Build Quality Report
 
@@ -179,6 +191,37 @@ jobs:
           | 8 | Vulnerability Check (npm audit) | $(icon $VULN_CHECK) | No moderate / high / critical vulnerabilities |
           | 9 | SonarQube Scan | $(icon $SONAR_SCAN) | Analysis uploaded successfully |
           | 10 | SonarQube Quality Gate | $(icon $SONAR_GATE) | Quality gate must pass |
+
+          EOF
+
+          # ── Collapsible: Unit Test Results ────────────────────────────────────
+          {
+            echo "<details>"
+            echo "<summary>🧪 Unit Test Results — ${UNIT_SUMMARY}</summary>"
+            echo ""
+            echo '```'
+            strip_ansi /tmp/unit-test-output.txt
+            echo '```'
+            echo ""
+            echo "</details>"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # ── Collapsible: E2E Test Results ─────────────────────────────────────
+          {
+            echo "<details>"
+            echo "<summary>🎭 E2E Test Results (Playwright) — ${E2E_SUMMARY}</summary>"
+            echo ""
+            echo '```'
+            strip_ansi /tmp/e2e-output.txt
+            echo '```'
+            echo ""
+            echo "</details>"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # ── Conclusion ────────────────────────────────────────────────────────
+          cat >> "$GITHUB_STEP_SUMMARY" << EOF
 
           ---
 
