@@ -75,7 +75,7 @@ function App() {
             className="action-btn"
             onClick={handleExport}
             disabled={exporting}
-            aria-label="Export to PDF"
+            aria-label="Export PDF"
           >
             {exporting ? '⏳ Exporting…' : '⬇ Export PDF'}
           </button>

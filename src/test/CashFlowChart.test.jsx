@@ -70,6 +70,11 @@ describe('CashFlowChart', () => {
     expect(screen.queryByTestId('responsive-container')).not.toBeInTheDocument()
   })
 
+  it('renders chart in dark mode without errors', () => {
+    render(<CashFlowChart dataA={dataA} dataB={dataB} validA validB darkMode />)
+    expect(screen.getByTestId('responsive-container')).toBeInTheDocument()
+  })
+
   it('handles mismatched periods — pads shorter scenario with null (triggers ?? null)', () => {
     const shortData = calculateROI({ ...inputs, period: 6 }).cashFlowData   // 6 months
     const longData  = calculateROI({ ...inputs, period: 12 }).cashFlowData  // 12 months
