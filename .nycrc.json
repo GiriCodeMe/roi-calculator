@@ -1,5 +1,5 @@
 {
-  "reporter": ["text", "html", "lcov"],
+  "reporter": ["text", "html", "lcov", "json-summary"],
   "include": ["src/components/**", "src/utils/**"],
   "exclude": ["src/test/**"],
   "extension": [".js", ".jsx"],
