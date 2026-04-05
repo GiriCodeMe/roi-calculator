@@ -15,8 +15,10 @@ import { execSync } from 'child_process'
 
 function readJson(filePath) {
   try {
-    return JSON.parse(fs.readFileSync(filePath, 'utf8'))
-  } catch {
+    const content = fs.readFileSync(filePath, 'utf8')
+    return JSON.parse(content)
+  } catch (err) {
+    console.warn(`  [readJson] ${filePath}: ${err.message}`)
     return null
   }
 }
@@ -74,66 +76,55 @@ const gateOutcome = (env) => (process.env[env] === 'success' ? 'pass' : 'fail')
 // ── Unit test metrics (vitest) ────────────────────────────────────────────────
 
 function collectUnitTests() {
+  console.log('  Checking unit test artifacts...')
   const summary = readJson('coverage/coverage-summary.json')
   const results = readJson('test-results/vitest-results.json')
+  console.log(`    coverage/coverage-summary.json : ${summary ? 'found' : 'MISSING'}`)
+  console.log(`    test-results/vitest-results.json: ${results ? 'found' : 'MISSING'}`)
 
-  if (!summary || !results) {
-    return {
-      total:  mock(0, 'count', 'vitest-results.json missing'),
-      passed: mock(0, 'count', 'vitest-results.json missing'),
-      failed: mock(0, 'count', 'vitest-results.json missing'),
-      coverage_lines:     mock(0, 'percent', 'coverage-summary.json missing'),
-      coverage_branches:  mock(0, 'percent', 'coverage-summary.json missing'),
-      coverage_functions: mock(0, 'percent', 'coverage-summary.json missing'),
-      coverage_statements:mock(0, 'percent', 'coverage-summary.json missing'),
-    }
-  }
-
-  const numTests  = results.numTotalTests  ?? 0
-  const numPassed = results.numPassedTests ?? 0
-  const numFailed = results.numFailedTests ?? 0
-  const total     = summary.total ?? {}
+  const covTotal = summary?.total ?? {}
+  const vitestTotal  = results?.numTotalTests  ?? null
+  const vitestPassed = results?.numPassedTests ?? null
+  const vitestFailed = results?.numFailedTests ?? null
 
   return {
-    total:  live(numTests,  'count', 'vitest-results.json'),
-    passed: live(numPassed, 'count', 'vitest-results.json'),
-    failed: live(numFailed, 'count', 'vitest-results.json'),
-    coverage_lines:      live(total.lines?.pct      ?? 0, 'percent', 'coverage-summary.json'),
-    coverage_branches:   live(total.branches?.pct   ?? 0, 'percent', 'coverage-summary.json'),
-    coverage_functions:  live(total.functions?.pct  ?? 0, 'percent', 'coverage-summary.json'),
-    coverage_statements: live(total.statements?.pct ?? 0, 'percent', 'coverage-summary.json'),
+    total:  vitestTotal  !== null ? live(vitestTotal,  'count', 'vitest-results.json')       : mock(0, 'count', 'vitest-results.json missing'),
+    passed: vitestPassed !== null ? live(vitestPassed, 'count', 'vitest-results.json')       : mock(0, 'count', 'vitest-results.json missing'),
+    failed: vitestFailed !== null ? live(vitestFailed, 'count', 'vitest-results.json')       : mock(0, 'count', 'vitest-results.json missing'),
+    coverage_lines:      covTotal.lines?.pct      != null ? live(covTotal.lines.pct,      'percent', 'coverage-summary.json') : mock(0, 'percent', 'coverage-summary.json missing'),
+    coverage_branches:   covTotal.branches?.pct   != null ? live(covTotal.branches.pct,   'percent', 'coverage-summary.json') : mock(0, 'percent', 'coverage-summary.json missing'),
+    coverage_functions:  covTotal.functions?.pct  != null ? live(covTotal.functions.pct,  'percent', 'coverage-summary.json') : mock(0, 'percent', 'coverage-summary.json missing'),
+    coverage_statements: covTotal.statements?.pct != null ? live(covTotal.statements.pct, 'percent', 'coverage-summary.json') : mock(0, 'percent', 'coverage-summary.json missing'),
   }
 }
 
 // ── E2E test metrics (playwright) ─────────────────────────────────────────────
 
 function collectE2eTests() {
+  console.log('  Checking E2E test artifacts...')
   const summary = readJson('coverage-e2e/coverage-summary.json')
   const results = readJson('test-results/playwright-results.json')
+  console.log(`    coverage-e2e/coverage-summary.json    : ${summary ? 'found' : 'MISSING'}`)
+  console.log(`    test-results/playwright-results.json  : ${results ? 'found' : 'MISSING'}`)
 
-  if (!summary || !results) {
-    return {
-      total:  mock(0, 'count', 'playwright-results.json missing'),
-      passed: mock(0, 'count', 'playwright-results.json missing'),
-      failed: mock(0, 'count', 'playwright-results.json missing'),
-      coverage_lines:     mock(0, 'percent', 'coverage-e2e missing'),
-      coverage_branches:  mock(0, 'percent', 'coverage-e2e missing'),
-      coverage_functions: mock(0, 'percent', 'coverage-e2e missing'),
-      coverage_statements:mock(0, 'percent', 'coverage-e2e missing'),
-    }
-  }
+  // Playwright JSON reporter: stats.expected = passed, stats.unexpected = failed
+  const stats    = results?.stats ?? {}
+  const pwPassed = stats.expected   ?? null   // "expected" = tests that passed as expected
+  const pwFailed = stats.unexpected ?? null   // "unexpected" = tests that failed
+  const pwTotal  = pwPassed !== null && pwFailed !== null
+    ? pwPassed + pwFailed + (stats.skipped ?? 0)
+    : null
 
-  const stats  = results.stats ?? {}
-  const total  = summary.total ?? {}
+  const covTotal = summary?.total ?? {}
 
   return {
-    total:  live(stats.expected  ?? 0, 'count', 'playwright-results.json'),
-    passed: live(stats.passed    ?? 0, 'count', 'playwright-results.json'),
-    failed: live(stats.unexpected ?? 0, 'count', 'playwright-results.json'),
-    coverage_lines:      live(total.lines?.pct      ?? 0, 'percent', 'coverage-e2e/coverage-summary.json'),
-    coverage_branches:   live(total.branches?.pct   ?? 0, 'percent', 'coverage-e2e/coverage-summary.json'),
-    coverage_functions:  live(total.functions?.pct  ?? 0, 'percent', 'coverage-e2e/coverage-summary.json'),
-    coverage_statements: live(total.statements?.pct ?? 0, 'percent', 'coverage-e2e/coverage-summary.json'),
+    total:  pwTotal  !== null ? live(pwTotal,  'count', 'playwright-results.json')  : mock(0, 'count', 'playwright-results.json missing'),
+    passed: pwPassed !== null ? live(pwPassed, 'count', 'playwright-results.json')  : mock(0, 'count', 'playwright-results.json missing'),
+    failed: pwFailed !== null ? live(pwFailed, 'count', 'playwright-results.json')  : mock(0, 'count', 'playwright-results.json missing'),
+    coverage_lines:      covTotal.lines?.pct      != null ? live(covTotal.lines.pct,      'percent', 'coverage-e2e/coverage-summary.json') : mock(0, 'percent', 'coverage-e2e missing'),
+    coverage_branches:   covTotal.branches?.pct   != null ? live(covTotal.branches.pct,   'percent', 'coverage-e2e/coverage-summary.json') : mock(0, 'percent', 'coverage-e2e missing'),
+    coverage_functions:  covTotal.functions?.pct  != null ? live(covTotal.functions.pct,  'percent', 'coverage-e2e/coverage-summary.json') : mock(0, 'percent', 'coverage-e2e missing'),
+    coverage_statements: covTotal.statements?.pct != null ? live(covTotal.statements.pct, 'percent', 'coverage-e2e/coverage-summary.json') : mock(0, 'percent', 'coverage-e2e missing'),
   }
 }
 

@@ -142,6 +142,14 @@ jobs:
           path: coverage/
           if-no-files-found: ignore
 
+      - name: Upload Test Results (vitest + playwright JSON)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          if-no-files-found: ignore
+
       # ── Gate 8: Code Lint ────────────────────────────────────────────────────
       - name: Code Lint (ESLint)
         id: lint
@@ -371,28 +379,29 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Build
-        run: npm run build
-
-      - name: Run unit tests with JSON reporter
-        run: npm run test:coverage
+      # Download all artifacts produced by quality-gates — no need to re-run tests
+      - name: Download unit test results (vitest JSON)
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
         continue-on-error: true
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Build with coverage instrumentation
-        run: npm run build:coverage
-
-      - name: Run E2E tests with JSON reporter
-        run: npm run test:e2e:coverage
+      - name: Download unit coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
         continue-on-error: true
 
-      - name: Generate E2E coverage report
-        run: npm run report:e2e:coverage
+      - name: Download E2E coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-e2e
+          path: coverage-e2e/
         continue-on-error: true
 
-      - name: Download Lighthouse artifact
+      - name: Download Lighthouse report
         uses: actions/download-artifact@v4
         with:
           name: lighthouse-report
