@@ -128,6 +128,28 @@ function collectE2eTests() {
   }
 }
 
+// ── A11y test metrics (playwright a11y-results.json) ─────────────────────────
+
+function collectA11yTests() {
+  console.log('  Checking A11y test artifacts...')
+  const results = readJson('test-results/a11y-results.json')
+  console.log(`    test-results/a11y-results.json: ${results ? 'found' : 'MISSING'}`)
+
+  const stats    = results?.stats ?? {}
+  const passed   = stats.expected   ?? null
+  const failed   = stats.unexpected ?? null
+  const total    = passed !== null && failed !== null
+    ? passed + failed + (stats.skipped ?? 0)
+    : null
+
+  return {
+    total:      total  !== null ? live(total,  'count', 'a11y-results.json') : mock(0, 'count', 'a11y-results.json missing'),
+    passed:     passed !== null ? live(passed, 'count', 'a11y-results.json') : mock(0, 'count', 'a11y-results.json missing'),
+    failed:     failed !== null ? live(failed, 'count', 'a11y-results.json') : mock(0, 'count', 'a11y-results.json missing'),
+    violations: mock(0, 'count', 'axe-core'),
+  }
+}
+
 // ── Lighthouse metrics ────────────────────────────────────────────────────────
 
 function collectLighthouse() {
@@ -261,6 +283,7 @@ async function main() {
   // Collect live data
   const unitTests  = collectUnitTests()
   const e2eTests   = collectE2eTests()
+  const a11yTests  = collectA11yTests()
   const lighthouse = collectLighthouse()
   const vuln       = collectVulnCheck()
   const { count: complexModules, totalLines } = countComplexModules()
@@ -374,7 +397,7 @@ async function main() {
       },
       unit_tests:  unitTests,
       e2e_tests:   e2eTests,
-      a11y_tests:  mock(0, 'violations', 'axe-core'),
+      a11y_tests:  a11yTests,
       lint_errors: {
         value:   process.env.GATE_LINT === 'success' ? 0 : -1,
         unit:    'count',
