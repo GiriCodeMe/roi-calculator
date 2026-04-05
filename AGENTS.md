@@ -52,10 +52,11 @@ src/
     validation.test.js
     currency.test.js
 e2e/
-  app.spec.js                  # Playwright behavioural test suite (60 tests)
-  accessibility.spec.js        # WCAG 2.1 AA axe-core tests (8 tests)
+  app.spec.js                  # Playwright behavioural test suite (63 tests)
+  accessibility.spec.js        # WCAG 2.1 AA axe-core tests (9 tests)
   fixtures.js                  # Custom test fixture — auto-saves Istanbul coverage
-playwright.config.js           # Playwright config — Chromium, port 4173, webServer
+playwright.config.js           # Playwright config — Chromium, port 4173, webServer (E2E + coverage)
+playwright.a11y.config.js      # Separate Playwright config for a11y — writes test-results/a11y-results.json
 .lighthouserc.json             # Lighthouse CI thresholds (Perf ≥80, A11y ≥90, BP ≥80)
 .nycrc.json                    # nyc E2E coverage config (79% threshold)
 ```

@@ -1,6 +1,6 @@
 # ROI Calculator — Requirements Specification
 
-_Version 1.1 | Updated: 2026-04-04_
+_Version 1.2 | Updated: 2026-04-04_
 
 ---
 
@@ -16,6 +16,7 @@ _Version 1.1 | Updated: 2026-04-04_
 8. [Constraints & Assumptions](#8-constraints--assumptions)
 
 > **v1.1 additions**: Epic 10 (Save Scenarios), Epic 11 (Chart Animation), Epic 12 (Multi-Currency); FR-11, FR-12, FR-13; AC-09, AC-10; updated assumptions for currency and data persistence.
+> **v1.2 corrections**: NFR-03.6 updated to 63 E2E tests (was 58); accessibility test count corrected to 9 (was 8); `playwright.a11y.config.js` added to file structure in AGENTS.md.
 
 ---
 
@@ -591,7 +592,7 @@ The ROI Calculator is a browser-based single-page application that enables users
 | NFR-03.3 | Unit test coverage — functions | ≥ 95% | Vitest / V8 coverage |
 | NFR-03.4 | Unit test coverage — branches | ≥ 95% | Vitest / V8 coverage |
 | NFR-03.5 | Unit test coverage — lines | ≥ 95% | Vitest / V8 coverage |
-| NFR-03.6 | E2E behavioural test pass rate (58 tests) | 100% (0 failures) | Playwright (`npm run test:e2e`) |
+| NFR-03.6 | E2E behavioural test pass rate (63 tests) | 100% (0 failures) | Playwright (`npm run test:e2e`) |
 | NFR-03.7 | E2E coverage — statements / functions / branches / lines | > 79% | nyc + Istanbul (`npm run check:e2e:coverage`) |
 | NFR-03.8 | ESLint errors | 0 | ESLint (`npm run lint`) |
 
