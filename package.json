@@ -12,7 +12,7 @@
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src/",
     "test:e2e": "playwright test",
-    "test:a11y": "playwright test e2e/accessibility.spec.js",
+    "test:a11y": "playwright test --config playwright.a11y.config.js e2e/accessibility.spec.js",
     "build:coverage": "cross-env VITE_COVERAGE=true vite build",
     "test:e2e:coverage": "cross-env VITE_COVERAGE=true playwright test",
     "report:e2e:coverage": "nyc report",

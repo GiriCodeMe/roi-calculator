@@ -124,8 +124,6 @@ jobs:
       - name: Accessibility Tests (WCAG 2.1 AA)
         id: a11y
         continue-on-error: true
-        env:
-          PLAYWRIGHT_JSON_OUTPUT_NAME: test-results/a11y-results.json
         run: |
           npm run test:a11y 2>&1 | tee /tmp/a11y-output.txt
           exit ${PIPESTATUS[0]}
