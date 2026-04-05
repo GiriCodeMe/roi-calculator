@@ -172,22 +172,56 @@ function collectLighthouse() {
 }
 
 // ── Vulnerability check (npm audit) ──────────────────────────────────────────
+// npm audit --json exits non-zero when vulnerabilities exist; stdout still has JSON.
+// Cannot use safeExec here — must capture err.stdout explicitly.
 
 function collectVulnCheck() {
-  const raw = safeExec('npm audit --json')
+  let raw = null
+  try {
+    raw = execSync('npm audit --json', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] })
+  } catch (err) {
+    raw = err.stdout ?? null
+  }
+
   if (!raw) return { total: mock(0, 'count', 'npm audit unavailable'), gate: gateOutcome('GATE_VULN') }
 
-  const audit = JSON.parse(raw)
-  const meta  = audit.metadata ?? {}
-  const vulns = meta.vulnerabilities ?? {}
-  const total = (vulns.moderate ?? 0) + (vulns.high ?? 0) + (vulns.critical ?? 0)
+  try {
+    const audit = JSON.parse(raw)
+    const meta  = audit.metadata ?? {}
+    const vulns = meta.vulnerabilities ?? {}
+    const total = (vulns.moderate ?? 0) + (vulns.high ?? 0) + (vulns.critical ?? 0)
+
+    return {
+      total:    live(total, 'count', 'npm audit --json'),
+      moderate: live(vulns.moderate  ?? 0, 'count', 'npm audit --json'),
+      high:     live(vulns.high      ?? 0, 'count', 'npm audit --json'),
+      critical: live(vulns.critical  ?? 0, 'count', 'npm audit --json'),
+      gate:     gateOutcome('GATE_VULN'),
+    }
+  } catch {
+    return { total: mock(0, 'count', 'npm audit parse error'), gate: gateOutcome('GATE_VULN') }
+  }
+}
+
+// ── AI commit ratio (derived from git history) ────────────────────────────────
+// Counts commits co-authored by Claude Code vs total commits as a real proxy
+// for AI contribution rate. Replaces the fully-mocked ai_acceptance_rate
+// with a derivable live metric until Copilot API is available.
+
+function collectAiCommitRatio() {
+  const totalOut = safeExec('git log --oneline')
+  const aiOut    = safeExec('git log --oneline --grep="Co-Authored-By: Claude"')
+
+  if (!totalOut) return null
+
+  const totalCommits = totalOut.trim().split('\n').filter(Boolean).length
+  const aiCommits    = aiOut ? aiOut.trim().split('\n').filter(Boolean).length : 0
+  const ratio        = totalCommits > 0 ? Math.round((aiCommits / totalCommits) * 100) : 0
 
   return {
-    total:    live(total, 'count', 'npm audit --json'),
-    moderate: live(vulns.moderate  ?? 0, 'count', 'npm audit --json'),
-    high:     live(vulns.high      ?? 0, 'count', 'npm audit --json'),
-    critical: live(vulns.critical  ?? 0, 'count', 'npm audit --json'),
-    gate:     gateOutcome('GATE_VULN'),
+    ratio,
+    ai_commits:    aiCommits,
+    total_commits: totalCommits,
   }
 }
 
@@ -258,7 +292,7 @@ async function collectActivity(token) {
 // ── Fetch existing series from dashboard repo ─────────────────────────────────
 
 async function fetchExistingSeries(token) {
-  const apiPath = `/repos/${DASHBOARD_REPO}/contents/metrics/roi-calculator.json`
+  const apiPath = `/repos/${DASHBOARD_REPO}/contents/metrics/roi-calculator/AIKPI.json`
   const res = await fetchGitHub(apiPath, token)
   if (!res || !res.content) return { heatmap_series: [], dual_axis_series: [] }
 
@@ -281,11 +315,12 @@ async function main() {
   const sprint = isoWeek(now)
 
   // Collect live data
-  const unitTests  = collectUnitTests()
-  const e2eTests   = collectE2eTests()
-  const a11yTests  = collectA11yTests()
-  const lighthouse = collectLighthouse()
-  const vuln       = collectVulnCheck()
+  const unitTests    = collectUnitTests()
+  const e2eTests     = collectE2eTests()
+  const a11yTests    = collectA11yTests()
+  const lighthouse   = collectLighthouse()
+  const vuln         = collectVulnCheck()
+  const aiCommit     = collectAiCommitRatio()
   const { count: complexModules, totalLines } = countComplexModules()
   const manualLines = totalLines - 0 // all lines counted as manual for now
 
@@ -296,6 +331,11 @@ async function main() {
   // Fetch existing series for append
   const { heatmap_series, dual_axis_series } = await fetchExistingSeries(GITHUB_TOKEN)
 
+  // Live: AI commit ratio derived from git Co-Authored-By history
+  const AI_COMMIT_RATIO        = aiCommit?.ratio ?? 0
+  const AI_COMMITS_TOTAL       = aiCommit?.ai_commits ?? 0
+  const ALL_COMMITS_TOTAL      = aiCommit?.total_commits ?? 0
+
   // Mock constants (replaced when real APIs are available)
   const AI_ACCEPTANCE_RATE     = 72  // mock — replace with Copilot API
   const BOILERPLATE_REDUCTION  = 38  // mock — % lines AI-generated
@@ -305,6 +345,7 @@ async function main() {
   const UNIT_COST_PER_FEATURE  = 12.50 // mock — USD
   const TOKEN_ROI              = 8.3   // mock — X return per token $
   const LABOR_ARBITRAGE_VALUE  = 1200  // mock — USD/month saved
+  const LEGACY_MODERNIZATION_ROI = 0.38 // mock — AI refactor cost / manual rewrite cost
 
   // Retention risk evaluation
   const high_ai_usage       = AI_ACCEPTANCE_RATE >= 70
@@ -338,12 +379,20 @@ async function main() {
       repo:           `${OWNER}/${REPO_NAME}`,
       collected_at:   now.toISOString(),
       ci_run_id:      GITHUB_RUN_ID,
-      schema_version: '1.0.0',
+      schema_version: '1.1.0',
     },
 
     tier1_input: {
       ai_acceptance_rate:    mock(AI_ACCEPTANCE_RATE, 'percent', 'copilot-api'),
       boilerplate_reduction: mock(BOILERPLATE_REDUCTION, 'percent', 'copilot-api'),
+      ai_commit_ratio: {
+        value:         AI_COMMIT_RATIO,
+        unit:          'percent',
+        source:        'git-log-co-authored-by',
+        is_mock:       false,
+        ai_commits:    AI_COMMITS_TOTAL,
+        total_commits: ALL_COMMITS_TOTAL,
+      },
     },
 
     tier2_process: {
@@ -357,9 +406,10 @@ async function main() {
     },
 
     tier4_value: {
-      unit_cost_per_feature:  mock(UNIT_COST_PER_FEATURE, 'USD', 'manual-estimate'),
-      token_roi:              mock(TOKEN_ROI, 'ratio', 'manual-estimate'),
-      labor_arbitrage_value:  mock(LABOR_ARBITRAGE_VALUE, 'USD/month', 'manual-estimate'),
+      unit_cost_per_feature:   mock(UNIT_COST_PER_FEATURE,      'USD',     'manual-estimate'),
+      token_roi:               mock(TOKEN_ROI,                  'ratio',   'manual-estimate'),
+      labor_arbitrage_value:   mock(LABOR_ARBITRAGE_VALUE,      'USD/month', 'manual-estimate'),
+      legacy_modernization_roi: mock(LEGACY_MODERNIZATION_ROI,  'ratio',   'manual-estimate'),
     },
 
     space_framework: {
@@ -420,9 +470,11 @@ async function main() {
 
   // Write output
   fs.mkdirSync('metrics', { recursive: true })
-  fs.writeFileSync('metrics/roi-calculator.json', JSON.stringify(metrics, null, 2))
-  console.log('metrics/roi-calculator.json written successfully')
-  console.log(`  Sprint: ${sprint}`)
+  fs.writeFileSync('metrics/AIKPI.json', JSON.stringify(metrics, null, 2))
+  console.log('metrics/AIKPI.json written successfully')
+  console.log(`  Schema version : 1.1.0`)
+  console.log(`  Sprint         : ${sprint}`)
+  console.log(`  AI commit ratio: ${AI_COMMIT_RATIO}% (${AI_COMMITS_TOTAL}/${ALL_COMMITS_TOTAL} commits)`)
   console.log(`  Heatmap entries: ${updatedHeatmap.length}`)
   console.log(`  Dual-axis entries: ${updatedDualAxis.length}`)
   console.log(`  Retention risk flagged: ${retention_flagged}`)

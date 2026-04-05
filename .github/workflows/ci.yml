@@ -457,15 +457,17 @@ jobs:
           token: ${{ secrets.SDLC_DASHBOARD_PAT }}
           path: dashboard-repo
 
-      - name: Copy metrics to dashboard repo
-        run: cp metrics/roi-calculator.json dashboard-repo/metrics/
+      - name: Copy AIKPI metrics to dashboard repo
+        run: |
+          mkdir -p dashboard-repo/metrics/roi-calculator
+          cp metrics/AIKPI.json dashboard-repo/metrics/roi-calculator/AIKPI.json
 
       - name: Commit and push metrics
         working-directory: dashboard-repo
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add metrics/roi-calculator.json
+          git add metrics/roi-calculator/AIKPI.json
           git diff --staged --quiet && echo "No metrics change" && exit 0
-          git commit -m "chore: update roi-calculator metrics [skip ci]"
+          git commit -m "chore: update roi-calculator AIKPI metrics [skip ci]"
           git push
